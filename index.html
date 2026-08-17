@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lawsuits Against Age Verification Laws in the US</title>
+  <style>
+    .ltrk {
+      --paper: #ffffff;
+      --card: #ffffff;
+      --ink: #111827;
+      --soft: #6b7280;
+      --rule: #e5e7eb;
+      --seal: #2563eb;
+      --seal-tint: #f0fdf4;
+      --accent-bg: #f8fafc;
+      --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      
+      background: var(--paper); color: var(--ink); font-family: var(--body);
+      font-size: 15px; line-height: 1.6; padding: 24px; margin: 0 auto; max-width: 1200px;
+    }
+    .ltrk *, .ltrk *::before, .ltrk *::after { box-sizing: border-box; }
+    .ltrk p, .ltrk h1, .ltrk h2, .ltrk h3, .ltrk dl, .ltrk dd { margin: 0; }
+    .ltrk button, .ltrk input, .ltrk select { font: inherit; color: inherit; }
+    .ltrk [hidden] { display: none !important; }
+    .ltrk-sr { position: absolute; left: -9999px; }
+
+    /* Header */
+    .ltrk h1 { font-weight: 700; font-size: clamp(24px, 4vw, 36px); line-height: 1.2; margin-bottom: 12px; color: #0f172a; }
+    .ltrk-blurb { max-width: 80ch; color: var(--soft); font-size: 16px; margin-bottom: 10px; }
+    .ltrk-suggest-link { display: inline-block; margin-bottom: 28px; font-size: 14px; color: var(--seal); font-weight: 500; text-decoration: none; }
+    .ltrk-suggest-link:hover { text-decoration: underline; }
+
+    /* Controls */
+    .ltrk-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; }
+    .ltrk-search { flex: 1 1 280px; }
+    .ltrk-search input { width: 100%; padding: 10px 14px; border: 1px solid var(--rule); border-radius: 6px; font-size: 15px; background: #fff; }
+    .ltrk-search input:focus { outline: none; border-color: var(--seal); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .ltrk select { padding: 10px 14px; border: 1px solid var(--rule); border-radius: 6px; font-size: 14px; cursor: pointer; background: #fff; }
+
+    .ltrk-statusline { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 13px; color: var(--soft); }
+
+    /* Table */
+    .ltrk-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .ltrk-table th { padding: 12px; border-bottom: 2px solid var(--rule); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--soft); white-space: nowrap; }
+    .ltrk-th-btn { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: inherit; font-weight: inherit; }
+    .ltrk-th-btn:hover { color: var(--seal); }
+    .ltrk-th-btn[data-dir]::after { content: " ↑"; }
+    .ltrk-th-btn[data-dir=desc]::after { content: " ↓"; }
+    .ltrk-table td { padding: 16px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+    .ltrk-row { cursor: pointer; transition: background-color 0.15s; }
+    .ltrk-row:hover td { background: #f8fafc; }
+
+    .ltrk-case { font-weight: 600; color: #0f172a; font-size: 16px; display: block; margin-bottom: 4px; }
+    .ltrk-tag { font-size: 11px; padding: 2px 6px; background: #e2e8f0; border-radius: 4px; margin-left: 6px; font-weight: 500; color: #334155; }
+    .ltrk-submeta { font-size: 13px; color: var(--soft); display: block; }
+    .ltrk-statute-title { font-size: 15px; font-weight: 600; color: #1e293b; display: block; margin-bottom: 3px; }
+    .ltrk-claims-text { font-size: 13px; color: var(--soft); display: block; }
+    .ltrk-date { font-size: 14px; color: var(--soft); white-space: nowrap; }
+
+    /* Prominent Long Status Box */
+    .ltrk-status-box {
+      background: #f1f5f9;
+      border-left: 4px solid #3b82f6;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      border-radius: 0 6px 6px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: #0f172a;
+      line-height: 1.5;
+    }
+
+    /* Superseded Section */
+    .ltrk-superseded-header { margin: 48px 0 16px; border-top: 2px dashed var(--rule); padding-top: 32px; }
+    .ltrk-superseded-header h3 { font-size: 18px; color: var(--ink); margin-bottom: 4px; font-weight: 600; }
+    .ltrk-superseded-header p { font-size: 14px; color: var(--soft); }
+
+    /* Expanded Details */
+    .ltrk-detail td { background: #fafafa; padding: 24px 20px; border-bottom: 2px solid var(--rule); }
+    .ltrk-dl { display: grid; grid-template-columns: minmax(150px, auto) 1fr; gap: 10px 24px; font-size: 14px; }
+    .ltrk-dl dt { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--soft); padding-top: 2px; }
+    .ltrk-detail a { color: var(--seal); text-decoration: none; font-weight: 500; }
+    .ltrk-detail a:hover { text-decoration: underline; }
+
+    .ltrk-msg { padding: 40px 20px; text-align: center; color: var(--soft); font-size: 15px; background: #fafafa; border-radius: 8px; border: 1px dashed var(--rule); }
+
+    @media (max-width: 720px) {
+      .ltrk-table thead { position: absolute; left: -9999px; }
+      .ltrk-table, .ltrk-table tbody, .ltrk-table tr, .ltrk-table td { display: block; width: 100%; }
+      .ltrk-table tr { border-bottom: 2px solid var(--rule); }
+      .ltrk-table td { border: 0; padding: 10px 16px; }
+      .ltrk-dl { grid-template-columns: 1fr; gap: 4px 0; }
+      .ltrk-dl dd { margin-bottom: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="ltrk">
+  <div class="ltrk-wrap">
+    <h1 id="ltrk-title"></h1>
+    <p class="ltrk-blurb" id="ltrk-blurb"></p>
+    <a href="#" id="ltrk-suggest" class="ltrk-suggest-link" target="_blank"></a>
+
+    <div class="ltrk-controls" id="ltrk-controls" hidden>
+      <div class="ltrk-search">
+        <label class="ltrk-sr" for="ltrk-q">Search cases</label>
+        <input id="ltrk-q" type="search" placeholder="Search case, statute, docket, notes..." autocomplete="off">
+      </div>
+      <select id="ltrk-f-state" aria-label="Filter by state"></select>
+      <select id="ltrk-f-circuit" aria-label="Filter by circuit"></select>
+    </div>
+
+    <div class="ltrk-statusline" id="ltrk-statusline" hidden>
+      <span id="ltrk-showing"></span>
+      <span id="ltrk-synctext"></span>
+    </div>
+
+    <div id="ltrk-out" aria-live="polite">
+      <div class="ltrk-msg">Loading tracker data...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CONFIG = {
+    title: "Lawsuits Against Age Verification Laws in the US",
+    blurb: "This regularly updated tracker includes all lawsuits challenging state statutes that require social media platforms to verify their users' ages. There may be more such laws that have passed than those included here. I only include them once they are challenged in court.",
+    suggestionLink: "mailto:example@yourwebsite.com?subject=Tracker%20Addition/Edit",
+    suggestionText: "Suggest an addition or edit",
+    dataUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1XzokpCbqU2n-vr56u3q4oQJZ0rnd1MF8BuQ9JPp_IqxYJZRyVHNgnR63loG5Z6R3Ke7-2B63bsXx/pub?gid=1317314093&single=true&output=csv",
+    cols: {
+      caseName: "CASE ACTION",
+      statute: "CHALLENGED STATUTE",
+      dateFiled: "DATE FILED",
+      claims: "COMPLAINT",
+      shortStatus: "SHORT STATUS",
+      status: "LONG STATUS",
+      internalStatus: "Internal status",
+      district: "DISTRICT",
+      districtDocket: "DISTRICT DOCKET",
+      districtUrl: "DISTRICT LINK",
+      districtDecision: "DISTRICT DECISION",
+      appealingParty: "APPEALING PARTY",
+      circuit: "CIRCUIT",
+      appealsDocket: "APPEALS DOCKET(S)",
+      appealsUrl: "APPEALS LINK",
+      circuitDecision: "CIRCUIT DECISION",
+      scotusDocket: "SCOTUS DOCKET",
+      scotusUrl: "SCOTUS LINK",
+      scotusOpinion: "SCOTUS OPINION",
+      notes: "NOTES"
+    },
+    blanks: ["-", "-", "-", "n/a", "na", "none", "tbd"],
+    dateLocale: "en-US"
+  };
+
+  var STATES = [
+    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+    "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas",
+    "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",
+    "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+    "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon",
+    "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah",
+    "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming", "District of Columbia"
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  var headers = [], grid = [], idx = {}, records = [];
+  var loadError = null, lastSync = null;
+
+  var state = { q: "", st: "", circ: "", sort: "dateFiled", dir: "desc", openKey: null };
+
+  function parseCSV(text) {
+    text = String(text).replace(/^\uFEFF/, "");
+    var out = [], row = [], f = "", i = 0, inQ = false, c;
+    while (i < text.length) {
+      c = text[i];
+      if (inQ) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { f += '"'; i += 2; continue; }
+          inQ = false; i++; continue;
+        }
+        f += c; i++; continue;
+      }
+      if (c === '"') { inQ = true; i++; continue; }
+      if (c === ",") { row.push(f); f = ""; i++; continue; }
+      if (c === "\r") { i++; continue; }
+      if (c === "\n") { row.push(f); out.push(row); row = []; f = ""; i++; continue; }
+      f += c; i++;
+    }
+    if (f !== "" || row.length) { row.push(f); out.push(row); }
+    return out;
+  }
+
+  function nonEmpty(g) {
+    return g.filter(function (r) { return r.some(function (c) { return String(c).trim() !== ""; }); });
+  }
+
+  function findHeaderRow(g) {
+    var want = String(CONFIG.cols.caseName).toLowerCase();
+    for (var i = 0; i < Math.min(g.length, 12); i++) {
+      for (var j = 0; j < g[i].length; j++) {
+        if (String(g[i][j]).trim().toLowerCase() === want) return i;
+      }
+    }
+    return 0;
+  }
+
+  function buildIndex(hdrs) {
+    var norm = hdrs.map(function (h) { return String(h).trim().toLowerCase(); });
+    var m = {};
+    Object.keys(CONFIG.cols).forEach(function (key) {
+      var want = String(CONFIG.cols[key]).trim().toLowerCase();
+      var i = norm.indexOf(want);
+      if (i === -1) i = norm.findIndex(function (h) { return h ? h.indexOf(want) !== -1 : false; });
+      if (i !== -1) m[key] = i;
+    });
+    return m;
+  }
+
+  function clean(s) {
+    s = String(s == null ? "" : s).trim();
+    return CONFIG.blanks.indexOf(s.toLowerCase()) !== -1 ? "" : s;
+  }
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function parseDate(s) {
+    if (!s) return null;
+    s = String(s).trim();
+    var m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+    m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
+    if (m) { var y = +m[3]; if (y < 100) y += 2000; return new Date(y, +m[1] - 1, +m[2]); }
+    var d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function fmtDate(d) {
+    return d ? d.toLocaleDateString(CONFIG.dateLocale, { year: "numeric", month: "short", day: "numeric" }) : "-";
+  }
+
+  function stateOf(statute) {
+    var s = String(statute || "").toLowerCase();
+    for (var i = 0; i < STATES.length; i++) {
+      if (s.indexOf(STATES[i].toLowerCase()) === 0) return STATES[i];
+    }
+    return "";
+  }
+
+  function url() {
+    var u = CONFIG.dataUrl;
+    return u + (u.indexOf("?") === -1 ? "?" : "&") + "_ts=" + Date.now();
+  }
+
+  function ingest(text) {
+    var g = parseCSV(text);
+    g = nonEmpty(g);
+    if (g.length < 2) throw new Error("No rows returned from CSV feed.");
+    var h = findHeaderRow(g);
+    headers = g[h].map(function (c) { return c; });
+    grid = g.slice(h + 1);
+    idx = buildIndex(headers);
+    if (idx.caseName == null) throw new Error("Could not find the '" + CONFIG.cols.caseName + "' column in the sheet.");
+  }
+
+  function paintSync() {
+    var txt = $("ltrk-synctext");
+    if (!txt) return;
+    var d = new Date();
+    txt.textContent = "Last updated: " + d.toLocaleTimeString(CONFIG.dateLocale, {hour: '2-digit', minute:'2-digit'});
+  }
+
+  function load() {
+    return fetch(url(), { credentials: "omit", cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+      .then(function (text) {
+        ingest(text);
+        lastSync = new Date();
+        buildRecords();
+        $("ltrk-title").textContent = CONFIG.title;
+        $("ltrk-blurb").textContent = CONFIG.blurb;
+        $("ltrk-suggest").textContent = CONFIG.suggestionText;
+        $("ltrk-suggest").href = CONFIG.suggestionLink;
+        
+        initFilters();
+        $("ltrk-controls").hidden = false;
+        $("ltrk-statusline").hidden = false;
+        renderTable();
+      })
+      .catch(function (e) {
+        loadError = (e && e.message) ? e.message : String(e);
+        fail();
+      });
+  }
+
+  function fail() {
+    $("ltrk-title").textContent = CONFIG.title;
+    $("ltrk-blurb").textContent = CONFIG.blurb;
+    $("ltrk-out").innerHTML =
+      '<div class="ltrk-msg"><strong>Unable to load tracker data.</strong><br><br>Error: ' + esc(loadError) + '</div>';
+  }
+
+  function buildRecords() {
+    records = grid.map(function (r, i) {
+      var get = function (k) { var j = idx[k]; return j == null ? "" : clean(r[j]); };
+      var name = get("caseName");
+      if (!name) return null;
+
+      var amendM = name.match(/\(([^)]*amended[^)]*)\)/i);
+      var base = name.replace(/\s*\([^)]*amended[^)]*\)\s*/i, "").trim();
+
+      var statute = get("statute");
+      var shortStatus = get("shortStatus").toUpperCase();
+      var key = [base, get("districtDocket"), amendM ? amendM[1] : "", i].join("|").toLowerCase();
+
+      return {
+        i: i, key: key, raw: r,
+        name: name, base: base, amend: amendM ? amendM[1] : "",
+        statute: statute, stateName: stateOf(statute),
+        date: parseDate(get("dateFiled")),
+        claims: get("claims"),
+        status: get("status"), shortStatus: shortStatus,
+        district: get("district"), 
+        districtDocket: get("districtDocket"), districtUrl: get("districtUrl"),
+        districtDecision: get("districtDecision"), appealingParty: get("appealingParty"),
+        circuit: get("circuit"), 
+        appealsDocket: get("appealsDocket"), appealsUrl: get("appealsUrl"),
+        circuitDecision: get("circuitDecision"), 
+        scotusDocket: get("scotusDocket"), scotusUrl: get("scotusUrl"),
+        scotusOpinion: get("scotusOpinion"), notes: get("notes"),
+        hay: r.join(" ").toLowerCase()
+      };
+    }).filter(Boolean);
+  }
+
+  function initFilters() {
+    fillSelect($("ltrk-f-state"), "All states", uniq(function (r) { return r.stateName; }), "");
+    fillSelect($("ltrk-f-circuit"), "All circuits", uniq(function (r) { return r.circuit; }), "");
+  }
+
+  function uniq(fn) {
+    var s = {};
+    records.forEach(function (r) { var v = fn(r); if (v) s[v] = 1; });
+    return Object.keys(s).sort(function (a, b) {
+      var na = parseInt(a, 10), nb = parseInt(b, 10);
+      if (!isNaN(na)) { if (!isNaN(nb)) return na - nb; }
+      return a.localeCompare(b);
+    });
+  }
+
+  function fillSelect(el, all, vals, keep) {
+    if (!vals.length) { el.hidden = true; el.innerHTML = ""; return; }
+    el.hidden = false;
+    el.innerHTML = '<option value="">' + esc(all) + "</option>" +
+      vals.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + "</option>"; }).join("");
+    el.value = (keep ? (vals.indexOf(keep) !== -1 ? keep : "") : "");
+  }
+
+  function filtered() {
+    var q = state.q.trim().toLowerCase();
+    return records.filter(function (r) {
+      if (q) { if (r.hay.indexOf(q) === -1) return false; }
+      if (state.st) { if (r.stateName !== state.st) return false; }
+      if (state.circ) { if (r.circuit !== state.circ) return false; }
+      return true;
+    });
+  }
+
+  function sorted(list) {
+    var k = state.sort, dir = state.dir === "asc" ? 1 : -1;
+    return list.slice().sort(function (a, b) {
+      var x, y;
+      if (k === "dateFiled") {
+        x = a.date ? a.date.getTime() : -Infinity;
+        y = b.date ? b.date.getTime() : -Infinity;
+      } else if (k === "statute") { x = (a.stateName || a.statute).toLowerCase(); y = (b.stateName || b.statute).toLowerCase(); }
+      else { x = String(a.base || "").toLowerCase(); y = String(b.base || "").toLowerCase(); }
+      if (x < y) return -dir;
+      if (x > y) return dir;
+      return (a.date ? (b.date ? b.date - a.date : 0) : 0);
+    });
+  }
+
+  function domId(key) { return "ltrk-r" + Math.abs(hash(key)); }
+
+  function buildTableMarkup(list) {
+    if (!list.length) return "";
+
+    var th = function (k, label) {
+      var d = state.sort === k ? ' data-dir="' + state.dir + '"' : "";
+      return '<th><button class="ltrk-th-btn" type="button" data-sort="' + k + '"' + d + ">" + label + "</button></th>";
+    };
+
+    var body = list.map(function (r) {
+      var isOpenRow = state.openKey === r.key;
+      
+      var docketDisplay = r.districtDocket;
+      if (r.districtUrl) {
+        docketDisplay = '<a href="' + esc(r.districtUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(r.districtDocket) + '</a>';
+      }
+
+      var submetaText = [esc(r.stateName), docketDisplay].filter(Boolean).join(" | ");
+
+      var html = '<tr class="ltrk-row" id="' + domId(r.key) + '" data-key="' + esc(r.key) +
+        '" tabindex="0" aria-expanded="' + isOpenRow + '">' +
+        '<td><span class="ltrk-case">' + esc(r.base) +
+          (r.amend ? '<span class="ltrk-tag">' + esc(r.amend) + "</span>" : "") + "</span>" +
+          (submetaText ? '<span class="ltrk-submeta">' + submetaText + "</span>" : "") + "</td>" +
+        '<td><span class="ltrk-statute-title">' + esc(r.statute || "-") + "</span>" +
+          (r.claims ? '<span class="ltrk-claims-text">' + esc(r.claims) + "</span>" : "") + "</td>" +
+        '<td class="ltrk-date">' + esc(fmtDate(r.date)) + "</td></tr>";
+      if (isOpenRow) { html += detail(r); }
+      return html;
+    }).join("");
+
+    return '<table class="ltrk-table"><thead><tr>' +
+      th("base", "Case") + th("statute", "Challenged Statute & Claims") + th("dateFiled", "Filed") +
+      "</tr></thead><tbody>" + body + "</tbody></table>";
+  }
+
+  function renderTable() {
+    var allCases = sorted(filtered());
+    $("ltrk-showing").textContent = "Showing " + allCases.length + " cases";
+    paintSync();
+
+    if (!allCases.length) {
+      $("ltrk-out").innerHTML = '<div class="ltrk-msg">No cases match your filters.</div>';
+      return;
+    }
+
+    var mainList = allCases.filter(function(r) { return r.shortStatus !== "SUPERSEDED"; });
+    var supersededList = allCases.filter(function(r) { return r.shortStatus === "SUPERSEDED"; });
+
+    var finalHTML = "";
+    
+    if (mainList.length) {
+      finalHTML += buildTableMarkup(mainList);
+    }
+    
+    if (supersededList.length) {
+      finalHTML += '<div class="ltrk-superseded-header">';
+      finalHTML += '<h3>Superseded Actions</h3>';
+      finalHTML += '<p>These matters are superseded by amended complaints above.</p>';
+      finalHTML += '</div>';
+      finalHTML += buildTableMarkup(supersededList);
+    }
+
+    $("ltrk-out").innerHTML = finalHTML;
+  }
+
+  function makeLink(text, url) {
+    if (!text) return "";
+    return url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(text) + "</a>" : esc(text);
+  }
+
+  function detail(r) {
+    var out = "";
+    if (r.status) { 
+      out += '<div class="ltrk-status-box">' + esc(r.status) + '</div>'; 
+    }
+    
+    var pairs = [
+      ["Statute", esc(r.statute)],
+      ["Claims", esc(r.claims)],
+      ["District", esc(r.district)],
+      ["District Docket", makeLink(r.districtDocket, r.districtUrl)],
+      ["District Decision", esc(r.districtDecision)],
+      ["Appealing Party", esc(r.appealingParty)],
+      ["Circuit", esc(r.circuit)],
+      ["Appeals Docket", makeLink(r.appealsDocket, r.appealsUrl)],
+      ["Circuit Decision", esc(r.circuitDecision)],
+      ["SCOTUS Docket", makeLink(r.scotusDocket, r.scotusUrl)],
+      ["SCOTUS Opinion", esc(r.scotusOpinion)],
+      ["Notes", esc(r.notes)]
+    ].filter(function (p) { return p[1]; });
+
+    out += '<dl class="ltrk-dl">' + pairs.map(function (p) {
+      return "<dt>" + p[0] + "</dt><dd>" + p[1] + "</dd>";
+    }).join("") + "</dl>";
+    return '<tr class="ltrk-detail"><td colspan="3">' + out + "</td></tr>";
+  }
+
+  function openCase(key) {
+    state.openKey = state.openKey === key ? null : key;
+    renderTable();
+    var el = $(domId(key));
+    if (el) { if (state.openKey === key) { el.scrollIntoView({ block: "center", behavior: "smooth" }); } }
+  }
+
+  function wire() {
+    var q = $("ltrk-q"), t;
+    q.addEventListener("input", function () {
+      clearTimeout(t);
+      t = setTimeout(function () { state.q = q.value; renderTable(); }, 150);
+    });
+    $("ltrk-f-state").addEventListener("change", function (e) { state.st = e.target.value; renderTable(); });
+    $("ltrk-f-circuit").addEventListener("change", function (e) { state.circ = e.target.value; renderTable(); });
+
+    $("ltrk-out").addEventListener("click", function (e) {
+      if (e.target.closest("a")) return;
+      var s = e.target.closest("[data-sort]");
+      if (s) {
+        var k = s.dataset.sort;
+        if (state.sort === k) { state.dir = state.dir === "asc" ? "desc" : "asc"; }
+        else { state.sort = k; state.dir = "asc"; }
+        renderTable(); return;
+      }
+      var row = e.target.closest(".ltrk-row");
+      if (row) { openCase(row.dataset.key); }
+    });
+  }
+
+  wire();
+  load();
+})();
+</script>
+
+</body>
+</html>
