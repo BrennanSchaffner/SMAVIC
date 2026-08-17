@@ -176,6 +176,12 @@
 
   var state = { q: "", st: "", circ: "", sort: "dateFiled", dir: "desc", openKey: null };
 
+  function hash(s) {
+    var h = 5381, i = s.length;
+    while (i) h = (h * 33 ^ s.charCodeAt(--i)) >>> 0;
+    return h.toString(36);
+  }
+
   function parseCSV(text) {
     text = String(text).replace(/^\uFEFF/, "");
     var out = [], row = [], f = "", i = 0, inQ = false, c;
@@ -395,7 +401,7 @@
     });
   }
 
-  function domId(key) { return "ltrk-r" + Math.abs(hash(key)); }
+  function domId(key) { return "ltrk-r" + Math.abs(parseInt(hash(key), 36)); }
 
   function buildTableMarkup(list) {
     if (!list.length) return "";
