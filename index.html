@@ -503,12 +503,9 @@
     }).join("") + "</dl>";
     return '<tr class="ltrk-detail"><td colspan="3">' + out + "</td></tr>";
   }
-
   function openCase(key) {
     state.openKey = state.openKey === key ? null : key;
     renderTable();
-    var el = $(domId(key));
-    if (el) { if (state.openKey === key) { el.scrollIntoView({ block: "center", behavior: "smooth" }); } }
   }
 
   function wire() {
