@@ -47,13 +47,14 @@
     .ltrk-suggest-link { display: inline-block; margin-bottom: 12px; font-size: 14px; color: var(--seal); font-weight: 500; text-decoration: none; }
     .ltrk-suggest-link:hover { text-decoration: underline; }
 
-    /* Map Box */
+    /* Map Box & Tooltip */
     .ltrk-map-card {
       background: #f8fafc;
       border: 1px solid var(--rule);
       border-radius: 8px;
       padding: 16px;
       text-align: center;
+      position: relative; /* Anchor for tooltip */
     }
     .ltrk-map-toggle {
       display: inline-flex;
@@ -83,12 +84,39 @@
       height: auto;
       display: block;
     }
-    .map-states-group path {
+
+    /* Map Interactive Styles */
+    .state-path {
+      fill: #cbd5e1;
+      stroke: none;
       cursor: pointer;
       transition: fill 0.15s;
     }
-    .map-states-group path:hover {
-      fill: #93c5fd !important;
+    .state-path.is-hovered {
+      fill: #93c5fd;
+    }
+    .state-path.is-active {
+      fill: var(--seal);
+    }
+    .state-path.is-active.is-hovered {
+      fill: #1d4ed8; /* Darker blue if hovered while active */
+    }
+    
+    .ltrk-map-tooltip {
+      position: absolute;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s;
+      z-index: 50;
+      white-space: nowrap;
+      transform: translate(-50%, -130%);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     /* Controls */
@@ -98,7 +126,7 @@
     .ltrk-search input:focus { outline: none; border-color: var(--seal); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
     .ltrk select { padding: 10px 14px; border: 1px solid var(--rule); border-radius: 6px; font-size: 14px; cursor: pointer; background: #fff; }
 
-    /* Status Bar & Tooltips */
+    /* Status Bar & Timestamps */
     .ltrk-statusline { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 13px; color: var(--soft); flex-wrap: wrap; gap: 8px; }
     .ltrk-timestamps { display: flex; gap: 16px; align-items: center; }
     
@@ -202,12 +230,13 @@
       </div>
 
       <!-- Interactive D3 Map Component -->
-      <div class="ltrk-map-card">
+      <div class="ltrk-map-card" id="ltrk-map-container">
         <div class="ltrk-map-toggle">
           <button id="ltrk-map-mode-state" type="button" aria-pressed="true">States</button>
           <button id="ltrk-map-mode-circuit" type="button" aria-pressed="false">Circuits</button>
         </div>
         <svg id="ltrk-map-svg" class="ltrk-us-map" viewBox="0 0 975 610"></svg>
+        <div id="ltrk-map-tooltip" class="ltrk-map-tooltip"></div>
       </div>
     </div>
 
@@ -423,21 +452,130 @@
     statesFeatures = statesFeatures.filter(function(f) { return STATE_NAME_TO_ABBR[f.properties.name]; });
 
     var pathGen = d3.geoPath();
+    
+    // Group for all states
     var g = svg.append("g").attr("class", "map-states-group");
 
-    g.selectAll("path")
+    // Standard State Paths
+    g.selectAll("path.state-path")
      .data(statesFeatures)
      .enter()
      .append("path")
-     .attr("d", pathGen)
-     .append("title")
-     .text(function(d) { return d.properties.name; });
+     .attr("class", "state-path")
+     .attr("d", pathGen);
 
-    // Boundary mesh path wrapper
+    // Enlarged DC Proxy off the coast
+    var dcFeature = statesFeatures.filter(function(f) { return f.properties.name === "District of Columbia"; })[0];
+    if (dcFeature) {
+      var centroid = pathGen.centroid(dcFeature);
+      var proxyX = 930, proxyY = 320; 
+      
+      var dcG = svg.append("g").attr("class", "dc-proxy-group");
+      
+      dcG.append("line")
+         .attr("x1", centroid[0]).attr("y1", centroid[1])
+         .attr("x2", proxyX).attr("y2", proxyY)
+         .attr("stroke", "#94a3b8").attr("stroke-width", 1.5).attr("stroke-dasharray", "3,3");
+         
+      dcG.append("circle")
+         .datum(dcFeature)
+         .attr("class", "state-path") // Enables exact same hover/highlight logic
+         .attr("cx", proxyX).attr("cy", proxyY)
+         .attr("r", 16);
+         
+      dcG.append("text")
+         .attr("x", proxyX).attr("y", proxyY + 4)
+         .attr("text-anchor", "middle")
+         .attr("font-size", "11px")
+         .attr("font-weight", "700")
+         .attr("fill", "#0f172a") // Stays dark for contrast when blue
+         .style("pointer-events", "none")
+         .text("DC");
+    }
+
+    // Boundary mesh path wrapper (Overlays states)
     svg.append("path")
        .attr("class", "map-borders")
        .style("pointer-events", "none")
        .style("fill", "none");
+
+    // Attach Smart Tooltips & Full-Circuit Hover logic to everything with .state-path
+    svg.selectAll(".state-path")
+       .on("mouseover", function(event, d) {
+          var name = d.properties.name;
+          var circ = getCircuit(name);
+          var isCircMode = state.mapMode === "circuit";
+          
+          // Highlight logic
+          svg.selectAll(".state-path").classed("is-hovered", function(p) {
+             if (isCircMode) {
+               return getCircuit(p.properties.name) === circ && circ !== "none";
+             }
+             return p.properties.name === name;
+          });
+          
+          // Tooltip content
+          var tooltip = $("ltrk-map-tooltip");
+          if (tooltip) {
+             tooltip.textContent = isCircMode ? (circ !== "none" ? circ : name) : name;
+             tooltip.style.opacity = 1;
+          }
+       })
+       .on("mousemove", function(event) {
+          var tooltip = $("ltrk-map-tooltip");
+          if (tooltip) {
+             var container = $("ltrk-map-container");
+             var rect = container.getBoundingClientRect();
+             var x = event.clientX - rect.left;
+             var y = event.clientY - rect.top;
+             tooltip.style.left = x + "px";
+             tooltip.style.top = y + "px";
+          }
+       })
+       .on("mouseout", function() {
+          svg.selectAll(".state-path").classed("is-hovered", false);
+          var tooltip = $("ltrk-map-tooltip");
+          if (tooltip) tooltip.style.opacity = 0;
+       });
+
+    // Handle clicks to sync dropdowns
+    svg.selectAll(".state-path").on("click", function(event, d) {
+      var clickedName = d.properties.name;
+
+      if (state.mapMode === "state") {
+        state.st = (state.st === clickedName) ? "" : clickedName;
+        
+        var stDropdown = $("ltrk-f-state");
+        var allSts = Array.prototype.map.call(stDropdown.options, function(o) { return o.value; });
+        if (allSts.indexOf(state.st) === -1 && state.st !== "") {
+           stDropdown.insertAdjacentHTML('beforeend', '<option value="'+esc(state.st)+'">'+esc(state.st)+'</option>');
+        }
+        stDropdown.value = state.st;
+
+      } else {
+        var targetCircKey = getCircuit(clickedName);
+        if (targetCircKey !== "none") {
+          var circDropdown = $("ltrk-f-circuit");
+          var allCircs = Array.prototype.map.call(circDropdown.options, function(o) { return o.value; });
+          
+          var exactCirc = targetCircKey;
+          for (var i = 0; i < allCircs.length; i++) {
+            if (allCircs[i].indexOf(targetCircKey) !== -1) {
+              exactCirc = allCircs[i];
+              break;
+            }
+          }
+
+          state.circ = (state.circ === exactCirc) ? "" : exactCirc;
+
+          if (allCircs.indexOf(state.circ) === -1 && state.circ !== "") {
+            circDropdown.insertAdjacentHTML('beforeend', '<option value="'+esc(state.circ)+'">'+esc(state.circ)+'</option>');
+          }
+          circDropdown.value = state.circ;
+        }
+      }
+      renderTable();
+    });
 
     updateMapHighlights();
   }
@@ -445,17 +583,16 @@
   function updateMapHighlights() {
     if (!usMapData) return;
     var svg = d3.select("#ltrk-map-svg");
-    var paths = svg.selectAll(".map-states-group path");
+    var paths = svg.selectAll(".state-path");
     var borderPath = svg.select(".map-borders");
     var pathGen = d3.geoPath();
 
     if (state.mapMode === "state") {
-      paths
-        .attr("fill", function(d) {
-           return (state.st && d.properties.name === state.st) ? "var(--seal)" : "#cbd5e1";
-        })
-        .attr("stroke", "none");
+      paths.classed("is-active", function(d) {
+         return state.st && d.properties.name === state.st;
+      });
 
+      // Draw standard inner state borders
       borderPath
         .datum(topojson.mesh(usMapData, usMapData.objects.states, function(a, b) { return a !== b; }))
         .attr("d", pathGen)
@@ -473,19 +610,18 @@
         });
       }
 
-      paths
-        .attr("fill", function(d) {
-           var abbr = STATE_NAME_TO_ABBR[d.properties.name];
-           return (activeAbbrs.indexOf(abbr) !== -1) ? "var(--seal)" : "#cbd5e1";
-        })
-        .attr("stroke", "none"); // Hides internal borders inside circuits
+      paths.classed("is-active", function(d) {
+         var abbr = STATE_NAME_TO_ABBR[d.properties.name];
+         return activeAbbrs.indexOf(abbr) !== -1;
+      });
 
+      // Draw strong circuit-only borders, erase inner state lines
       borderPath
         .datum(topojson.mesh(usMapData, usMapData.objects.states, function(a, b) {
            return a === b || getCircuit(a.properties.name) !== getCircuit(b.properties.name);
         }))
         .attr("d", pathGen)
-        .attr("stroke", "#64748b") // Distinct dark slate borders
+        .attr("stroke", "#475569") // Distinct dark slate
         .attr("stroke-width", 1.5)
         .attr("stroke-linejoin", "round");
     }
@@ -683,7 +819,10 @@
     var allCases = sorted(filtered());
     $("ltrk-showing").textContent = "Showing " + allCases.length + " cases";
     paintSync();
-    updateMapHighlights();
+    
+    if (usMapData) {
+      updateMapHighlights();
+    }
 
     if (!allCases.length) {
       $("ltrk-out").innerHTML = '<div class="ltrk-msg">No cases match your filters.</div>';
@@ -776,54 +915,6 @@
       $("ltrk-map-mode-state").setAttribute("aria-pressed", "false");
       $("ltrk-map-mode-circuit").setAttribute("aria-pressed", "true");
       updateMapHighlights();
-    });
-
-    // Handle clicks on map paths
-    $("ltrk-map-svg").addEventListener("click", function(e) {
-      var path = e.target.closest("path");
-      if (!path || path.classList.contains("map-borders")) return;
-      
-      var d = d3.select(path).datum();
-      if (!d || !d.properties) return;
-
-      var clickedName = d.properties.name;
-
-      if (state.mapMode === "state") {
-        state.st = (state.st === clickedName) ? "" : clickedName;
-        
-        // Dynamically add state to dropdown if it isn't listed yet
-        var stDropdown = $("ltrk-f-state");
-        var allSts = Array.prototype.map.call(stDropdown.options, function(o) { return o.value; });
-        if (allSts.indexOf(state.st) === -1 && state.st !== "") {
-           stDropdown.insertAdjacentHTML('beforeend', '<option value="'+esc(state.st)+'">'+esc(state.st)+'</option>');
-        }
-        stDropdown.value = state.st;
-
-      } else {
-        var targetCircKey = getCircuit(clickedName);
-        if (targetCircKey !== "none") {
-          var circDropdown = $("ltrk-f-circuit");
-          var allCircs = Array.prototype.map.call(circDropdown.options, function(o) { return o.value; });
-          
-          var exactCirc = targetCircKey;
-          // Fuzzy match against dropdown options
-          for (var i = 0; i < allCircs.length; i++) {
-            if (allCircs[i].indexOf(targetCircKey) !== -1) {
-              exactCirc = allCircs[i];
-              break;
-            }
-          }
-
-          state.circ = (state.circ === exactCirc) ? "" : exactCirc;
-
-          // Dynamically add circuit to dropdown if it isn't listed yet
-          if (allCircs.indexOf(state.circ) === -1 && state.circ !== "") {
-            circDropdown.insertAdjacentHTML('beforeend', '<option value="'+esc(state.circ)+'">'+esc(state.circ)+'</option>');
-          }
-          circDropdown.value = state.circ;
-        }
-      }
-      renderTable();
     });
 
     $("ltrk-out").addEventListener("click", function (e) {
