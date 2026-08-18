@@ -99,7 +99,7 @@
       fill: var(--seal);
     }
     .state-path.is-active.is-hovered {
-      fill: #1d4ed8; /* Darker blue if hovered while active */
+      fill: #1d4ed8; 
     }
     
     .ltrk-map-tooltip {
@@ -311,19 +311,20 @@
     "Oklahoma": "OK", "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
     "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Vermont": "VT",
     "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY",
-    "District of Columbia": "DC"
+    "District of Columbia": "DC", "Puerto Rico": "PR", "Guam": "GU", "U.S. Virgin Islands": "VI", 
+    "Northern Mariana Islands": "MP", "American Samoa": "AS"
   };
 
   var CIRCUIT_MAP = {
-    "1st Circuit": ["ME", "NH", "MA", "RI"],
+    "1st Circuit": ["ME", "NH", "MA", "RI", "PR"],
     "2nd Circuit": ["VT", "NY", "CT"],
-    "3rd Circuit": ["PA", "NJ", "DE"],
+    "3rd Circuit": ["PA", "NJ", "DE", "VI"],
     "4th Circuit": ["MD", "VA", "WV", "NC", "SC"],
     "5th Circuit": ["TX", "LA", "MS"],
     "6th Circuit": ["MI", "OH", "KY", "TN"],
     "7th Circuit": ["WI", "IL", "IN"],
     "8th Circuit": ["ND", "SD", "NE", "MN", "IA", "MO", "AR"],
-    "9th Circuit": ["WA", "OR", "ID", "MT", "NV", "CA", "AZ", "AK", "HI"],
+    "9th Circuit": ["WA", "OR", "ID", "MT", "NV", "CA", "AZ", "AK", "HI", "GU", "MP"],
     "10th Circuit": ["WY", "UT", "CO", "NM", "KS", "OK"],
     "11th Circuit": ["AL", "GA", "FL"],
     "D.C. Circuit": ["DC"]
@@ -449,14 +450,13 @@
     svg.selectAll("*").remove();
 
     var statesFeatures = topojson.feature(usMapData, usMapData.objects.states).features;
+    // Keep only features we have mapped in our constants
     statesFeatures = statesFeatures.filter(function(f) { return STATE_NAME_TO_ABBR[f.properties.name]; });
 
     var pathGen = d3.geoPath();
-    
-    // Group for all states
     var g = svg.append("g").attr("class", "map-states-group");
 
-    // Standard State Paths
+    // Standard geographic state paths
     g.selectAll("path.state-path")
      .data(statesFeatures)
      .enter()
@@ -464,34 +464,48 @@
      .attr("class", "state-path")
      .attr("d", pathGen);
 
-    // Enlarged DC Proxy off the coast
-    var dcFeature = statesFeatures.filter(function(f) { return f.properties.name === "District of Columbia"; })[0];
-    if (dcFeature) {
-      var centroid = pathGen.centroid(dcFeature);
-      var proxyX = 930, proxyY = 320; 
-      
-      var dcG = svg.append("g").attr("class", "dc-proxy-group");
-      
-      dcG.append("line")
-         .attr("x1", centroid[0]).attr("y1", centroid[1])
-         .attr("x2", proxyX).attr("y2", proxyY)
-         .attr("stroke", "#94a3b8").attr("stroke-width", 1.5).attr("stroke-dasharray", "3,3");
-         
-      dcG.append("circle")
-         .datum(dcFeature)
-         .attr("class", "state-path") // Enables exact same hover/highlight logic
-         .attr("cx", proxyX).attr("cy", proxyY)
-         .attr("r", 16);
-         
-      dcG.append("text")
-         .attr("x", proxyX).attr("y", proxyY + 4)
-         .attr("text-anchor", "middle")
-         .attr("font-size", "11px")
-         .attr("font-weight", "700")
-         .attr("fill", "#0f172a") // Stays dark for contrast when blue
-         .style("pointer-events", "none")
-         .text("DC");
-    }
+    // Proxy Box Definitions for non-contiguous or tiny areas
+    var proxyData = [
+      { name: "District of Columbia", x: 930, y: 320, label: "DC", hasLine: true },
+      { name: "Guam", x: 60, y: 460, label: "GU", hasLine: false },
+      { name: "Northern Mariana Islands", x: 60, y: 510, label: "MP", hasLine: false },
+      { name: "American Samoa", x: 60, y: 560, label: "AS", hasLine: false },
+      { name: "U.S. Virgin Islands", x: 930, y: 560, label: "VI", hasLine: false }
+    ];
+
+    proxyData.forEach(function(loc) {
+       // Check if feature exists natively (like DC)
+       var feature = statesFeatures.filter(function(f) { return f.properties.name === loc.name; })[0];
+       // If no feature exists natively (like Guam), create a synthetic one so datum works
+       if (!feature) {
+         feature = { properties: { name: loc.name } };
+       }
+
+       var gProxy = svg.append("g").attr("class", "proxy-group");
+
+       if (loc.hasLine && feature.geometry) {
+         var centroid = pathGen.centroid(feature);
+         gProxy.append("line")
+            .attr("x1", centroid[0]).attr("y1", centroid[1])
+            .attr("x2", loc.x).attr("y2", loc.y)
+            .attr("stroke", "#94a3b8").attr("stroke-width", 1.5).attr("stroke-dasharray", "3,3");
+       }
+
+       gProxy.append("circle")
+          .datum(feature)
+          .attr("class", "state-path proxy-circle")
+          .attr("cx", loc.x).attr("cy", loc.y)
+          .attr("r", 16);
+
+       gProxy.append("text")
+          .attr("x", loc.x).attr("y", loc.y + 4)
+          .attr("text-anchor", "middle")
+          .attr("font-size", "11px")
+          .attr("font-weight", "700")
+          .attr("fill", "#0f172a")
+          .style("pointer-events", "none")
+          .text(loc.label);
+    });
 
     // Boundary mesh path wrapper (Overlays states)
     svg.append("path")
@@ -818,11 +832,9 @@
   function renderTable() {
     var allCases = sorted(filtered());
     
-    // Split into active and superseded lists BEFORE generating count
     var mainList = allCases.filter(function(r) { return r.shortStatus !== "SUPERSEDED"; });
     var supersededList = allCases.filter(function(r) { return r.shortStatus === "SUPERSEDED"; });
 
-    // Ensure the count only reflects ACTIVE/ONGOING lawsuits
     $("ltrk-showing").textContent = "Showing " + mainList.length + " cases";
     paintSync();
     
