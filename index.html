@@ -464,12 +464,12 @@
      .attr("class", "state-path")
      .attr("d", pathGen);
 
-    // Proxy Box Definitions for non-contiguous or tiny areas
+    // Proxy Box Definitions - moved GU/MP/AS to top left to avoid Alaska overlap
     var proxyData = [
       { name: "District of Columbia", x: 930, y: 320, label: "DC", hasLine: true },
-      { name: "Guam", x: 60, y: 460, label: "GU", hasLine: false },
-      { name: "Northern Mariana Islands", x: 60, y: 510, label: "MP", hasLine: false },
-      { name: "American Samoa", x: 60, y: 560, label: "AS", hasLine: false },
+      { name: "Guam", x: 40, y: 240, label: "GU", hasLine: false },
+      { name: "Northern Mariana Islands", x: 40, y: 290, label: "MP", hasLine: false },
+      { name: "American Samoa", x: 40, y: 340, label: "AS", hasLine: false },
       { name: "U.S. Virgin Islands", x: 930, y: 560, label: "VI", hasLine: false }
     ];
 
@@ -558,23 +558,36 @@
 
       if (state.mapMode === "state") {
         state.st = (state.st === clickedName) ? "" : clickedName;
+        
+        var stDropdown = $("ltrk-f-state");
+        var allSts = Array.prototype.map.call(stDropdown.options, function(o) { return o.value; });
+        if (allSts.indexOf(state.st) === -1 && state.st !== "") {
+           stDropdown.insertAdjacentHTML('beforeend', '<option value="'+esc(state.st)+'">'+esc(state.st)+'</option>');
+        }
+        stDropdown.value = state.st;
+
       } else {
         var targetCircKey = getCircuit(clickedName);
         if (targetCircKey !== "none") {
-          var allCircs = uniq(function (r) { return r.circuit; });
-          var exactCirc = targetCircKey;
+          var circDropdown = $("ltrk-f-circuit");
+          var allCircs = Array.prototype.map.call(circDropdown.options, function(o) { return o.value; });
           
-          // Match against the exact label in your tracker dataset
+          var exactCirc = targetCircKey;
           for (var i = 0; i < allCircs.length; i++) {
             if (allCircs[i].indexOf(targetCircKey) !== -1) {
               exactCirc = allCircs[i];
               break;
             }
           }
+
           state.circ = (state.circ === exactCirc) ? "" : exactCirc;
+
+          if (allCircs.indexOf(state.circ) === -1 && state.circ !== "") {
+            circDropdown.insertAdjacentHTML('beforeend', '<option value="'+esc(state.circ)+'">'+esc(state.circ)+'</option>');
+          }
+          circDropdown.value = state.circ;
         }
       }
-      
       initFilters(); // Rebuilds the dropdowns cleanly with the new selection
       renderTable();
     });
@@ -927,16 +940,30 @@
 
     $("ltrk-map-mode-state").addEventListener("click", function() {
       state.mapMode = "state";
+      
+      // Clear selections when toggling modes
+      state.circ = "";
+      $("ltrk-f-circuit").value = "";
+      
       $("ltrk-map-mode-state").setAttribute("aria-pressed", "true");
       $("ltrk-map-mode-circuit").setAttribute("aria-pressed", "false");
+      initFilters();
       updateMapHighlights();
+      renderTable();
     });
 
     $("ltrk-map-mode-circuit").addEventListener("click", function() {
       state.mapMode = "circuit";
+      
+      // Clear selections when toggling modes
+      state.st = "";
+      $("ltrk-f-state").value = "";
+      
       $("ltrk-map-mode-state").setAttribute("aria-pressed", "false");
       $("ltrk-map-mode-circuit").setAttribute("aria-pressed", "true");
+      initFilters();
       updateMapHighlights();
+      renderTable();
     });
 
     $("ltrk-out").addEventListener("click", function (e) {
