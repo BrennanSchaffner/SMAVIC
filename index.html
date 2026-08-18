@@ -817,7 +817,13 @@
 
   function renderTable() {
     var allCases = sorted(filtered());
-    $("ltrk-showing").textContent = "Showing " + allCases.length + " cases";
+    
+    // Split into active and superseded lists BEFORE generating count
+    var mainList = allCases.filter(function(r) { return r.shortStatus !== "SUPERSEDED"; });
+    var supersededList = allCases.filter(function(r) { return r.shortStatus === "SUPERSEDED"; });
+
+    // Ensure the count only reflects ACTIVE/ONGOING lawsuits
+    $("ltrk-showing").textContent = "Showing " + mainList.length + " cases";
     paintSync();
     
     if (usMapData) {
@@ -828,9 +834,6 @@
       $("ltrk-out").innerHTML = '<div class="ltrk-msg">No cases match your filters.</div>';
       return;
     }
-
-    var mainList = allCases.filter(function(r) { return r.shortStatus !== "SUPERSEDED"; });
-    var supersededList = allCases.filter(function(r) { return r.shortStatus === "SUPERSEDED"; });
 
     var finalHTML = "";
     
