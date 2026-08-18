@@ -552,42 +552,30 @@
           if (tooltip) tooltip.style.opacity = 0;
        });
 
-    // Handle clicks to sync dropdowns
+    // Handle clicks to dynamically build dropdown and filter
     svg.selectAll(".state-path").on("click", function(event, d) {
       var clickedName = d.properties.name;
 
       if (state.mapMode === "state") {
         state.st = (state.st === clickedName) ? "" : clickedName;
-        
-        var stDropdown = $("ltrk-f-state");
-        var allSts = Array.prototype.map.call(stDropdown.options, function(o) { return o.value; });
-        if (allSts.indexOf(state.st) === -1 && state.st !== "") {
-           stDropdown.insertAdjacentHTML('beforeend', '<option value="'+esc(state.st)+'">'+esc(state.st)+'</option>');
-        }
-        stDropdown.value = state.st;
-
       } else {
         var targetCircKey = getCircuit(clickedName);
         if (targetCircKey !== "none") {
-          var circDropdown = $("ltrk-f-circuit");
-          var allCircs = Array.prototype.map.call(circDropdown.options, function(o) { return o.value; });
-          
+          var allCircs = uniq(function (r) { return r.circuit; });
           var exactCirc = targetCircKey;
+          
+          // Match against the exact label in your tracker dataset
           for (var i = 0; i < allCircs.length; i++) {
             if (allCircs[i].indexOf(targetCircKey) !== -1) {
               exactCirc = allCircs[i];
               break;
             }
           }
-
           state.circ = (state.circ === exactCirc) ? "" : exactCirc;
-
-          if (allCircs.indexOf(state.circ) === -1 && state.circ !== "") {
-            circDropdown.insertAdjacentHTML('beforeend', '<option value="'+esc(state.circ)+'">'+esc(state.circ)+'</option>');
-          }
-          circDropdown.value = state.circ;
         }
       }
+      
+      initFilters(); // Rebuilds the dropdowns cleanly with the new selection
       renderTable();
     });
 
@@ -745,8 +733,24 @@
   }
 
   function initFilters() {
-    fillSelect($("ltrk-f-state"), "All states", uniq(function (r) { return r.stateName; }), "");
-    fillSelect($("ltrk-f-circuit"), "All circuits", uniq(function (r) { return r.circuit; }), "");
+    var stVals = uniq(function (r) { return r.stateName; });
+    if (state.st && stVals.indexOf(state.st) === -1) {
+      stVals.push(state.st);
+    }
+    stVals.sort(function(a,b) { return a.localeCompare(b); });
+    
+    var circVals = uniq(function (r) { return r.circuit; });
+    if (state.circ && circVals.indexOf(state.circ) === -1) {
+      circVals.push(state.circ);
+    }
+    circVals.sort(function(a,b) {
+      var na = parseInt(a, 10), nb = parseInt(b, 10);
+      if (!isNaN(na)) { if (!isNaN(nb)) return na - nb; }
+      return a.localeCompare(b);
+    });
+
+    fillSelect($("ltrk-f-state"), "All states", stVals, state.st);
+    fillSelect($("ltrk-f-circuit"), "All circuits", circVals, state.circ);
   }
 
   function uniq(fn) {
@@ -832,6 +836,7 @@
   function renderTable() {
     var allCases = sorted(filtered());
     
+    // Split into active and superseded lists BEFORE generating count
     var mainList = allCases.filter(function(r) { return r.shortStatus !== "SUPERSEDED"; });
     var supersededList = allCases.filter(function(r) { return r.shortStatus === "SUPERSEDED"; });
 
@@ -910,11 +915,13 @@
     
     $("ltrk-f-state").addEventListener("change", function (e) {
       state.st = e.target.value;
+      initFilters(); // Re-sync dropdown options cleanly
       renderTable();
     });
     
     $("ltrk-f-circuit").addEventListener("change", function (e) {
       state.circ = e.target.value;
+      initFilters(); // Re-sync dropdown options cleanly
       renderTable();
     });
 
