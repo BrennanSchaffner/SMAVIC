@@ -312,7 +312,7 @@
     "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Vermont": "VT",
     "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY",
     "District of Columbia": "DC", "Puerto Rico": "PR", "Guam": "GU", "U.S. Virgin Islands": "VI", 
-    "Northern Mariana Islands": "MP", "American Samoa": "AS"
+    "Northern Mariana Islands": "MP"
   };
 
   var CIRCUIT_MAP = {
@@ -464,13 +464,13 @@
      .attr("class", "state-path")
      .attr("d", pathGen);
 
-    // Proxy Box Definitions - moved GU/MP/AS to top left to avoid Alaska overlap
+    // Proxy Box Definitions - stacked vertically below DC on the right
     var proxyData = [
-      { name: "District of Columbia", x: 930, y: 320, label: "DC", hasLine: true },
-      { name: "Guam", x: 40, y: 240, label: "GU", hasLine: false },
-      { name: "Northern Mariana Islands", x: 40, y: 290, label: "MP", hasLine: false },
-      { name: "American Samoa", x: 40, y: 340, label: "AS", hasLine: false },
-      { name: "U.S. Virgin Islands", x: 930, y: 560, label: "VI", hasLine: false }
+      { name: "District of Columbia", x: 935, y: 300, label: "DC", hasLine: true },
+      { name: "Puerto Rico", x: 935, y: 350, label: "PR", hasLine: false },
+      { name: "U.S. Virgin Islands", x: 935, y: 400, label: "VI", hasLine: false },
+      { name: "Guam", x: 935, y: 450, label: "GU", hasLine: false },
+      { name: "Northern Mariana Islands", x: 935, y: 500, label: "MP", hasLine: false }
     ];
 
     proxyData.forEach(function(loc) {
@@ -495,12 +495,12 @@
           .datum(feature)
           .attr("class", "state-path proxy-circle")
           .attr("cx", loc.x).attr("cy", loc.y)
-          .attr("r", 16);
+          .attr("r", 18);
 
        gProxy.append("text")
-          .attr("x", loc.x).attr("y", loc.y + 4)
+          .attr("x", loc.x).attr("y", loc.y + 4.5)
           .attr("text-anchor", "middle")
-          .attr("font-size", "11px")
+          .attr("font-size", "13px")
           .attr("font-weight", "700")
           .attr("fill", "#0f172a")
           .style("pointer-events", "none")
