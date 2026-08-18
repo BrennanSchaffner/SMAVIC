@@ -42,7 +42,38 @@
     .ltrk-search input:focus { outline: none; border-color: var(--seal); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
     .ltrk select { padding: 10px 14px; border: 1px solid var(--rule); border-radius: 6px; font-size: 14px; cursor: pointer; background: #fff; }
 
-    .ltrk-statusline { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 13px; color: var(--soft); }
+    /* Status Bar & Tooltips */
+    .ltrk-statusline { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; font-size: 13px; color: var(--soft); flex-wrap: wrap; gap: 8px; }
+    .ltrk-timestamps { display: flex; gap: 16px; align-items: center; }
+    
+    .ltrk-tooltip-item {
+      position: relative;
+      cursor: help;
+      border-bottom: 1px dotted var(--soft);
+    }
+    .ltrk-tooltip-item::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      right: 0;
+      transform: translateX(0);
+      background-color: #0f172a;
+      color: #ffffff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      z-index: 10;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      pointer-events: none;
+    }
+    .ltrk-tooltip-item:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
 
     /* Table */
     .ltrk-table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -96,6 +127,7 @@
       .ltrk-table td { border: 0; padding: 10px 16px; }
       .ltrk-dl { grid-template-columns: 1fr; gap: 4px 0; }
       .ltrk-dl dd { margin-bottom: 12px; }
+      .ltrk-statusline { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -118,7 +150,10 @@
 
     <div class="ltrk-statusline" id="ltrk-statusline" hidden>
       <span id="ltrk-showing"></span>
-      <span id="ltrk-synctext"></span>
+      <div class="ltrk-timestamps">
+        <span id="ltrk-checked-text" class="ltrk-tooltip-item" data-tooltip="Guarantees every case on this tracker has been manually reviewed up through at least this date."></span>
+        <span id="ltrk-synctext" class="ltrk-tooltip-item" data-tooltip="The live time this page successfully fetched data from Google Sheets."></span>
+      </div>
     </div>
 
     <div id="ltrk-out" aria-live="polite">
@@ -157,7 +192,8 @@
       scotusDocket: "SCOTUS DOCKET",
       scotusUrl: "SCOTUS LINK",
       scotusOpinion: "SCOTUS OPINION",
-      notes: "NOTES"
+      notes: "NOTES",
+      lastChecked: "Last Checked"
     },
     blanks: ["-", "-", "-", "n/a", "na", "none", "tbd"],
     dateLocale: "en-US"
@@ -288,10 +324,27 @@
   }
 
   function paintSync() {
-    var txt = $("ltrk-synctext");
-    if (!txt) return;
-    var d = new Date();
-    txt.textContent = "Last updated: " + d.toLocaleTimeString(CONFIG.dateLocale, {hour: '2-digit', minute:'2-digit'});
+    var txtSync = $("ltrk-synctext");
+    var txtChecked = $("ltrk-checked-text");
+    
+    if (txtSync) {
+      var d = new Date();
+      txtSync.textContent = "Synced: " + d.toLocaleTimeString(CONFIG.dateLocale, {hour: '2-digit', minute:'2-digit'});
+    }
+
+    if (txtChecked) {
+      // Conservative: Filter valid dates and sort ascending (oldest date first)
+      var oldestCheck = records
+        .map(function(r) { return r.lastCheckedDate; })
+        .filter(Boolean)
+        .sort(function(a, b) { return a - b; })[0];
+
+      if (oldestCheck) {
+        txtChecked.textContent = "All cases current through: " + fmtDate(oldestCheck);
+      } else {
+        txtChecked.textContent = "";
+      }
+    }
   }
 
   function load() {
@@ -342,6 +395,7 @@
         name: name, base: base, amend: amendM ? amendM[1] : "",
         statute: statute, stateName: stateOf(statute),
         date: parseDate(get("dateFiled")),
+        lastCheckedDate: parseDate(get("lastChecked")),
         claims: get("claims"),
         status: get("status"), shortStatus: shortStatus,
         district: get("district"), 
@@ -503,6 +557,7 @@
     }).join("") + "</dl>";
     return '<tr class="ltrk-detail"><td colspan="3">' + out + "</td></tr>";
   }
+
   function openCase(key) {
     state.openKey = state.openKey === key ? null : key;
     renderTable();
