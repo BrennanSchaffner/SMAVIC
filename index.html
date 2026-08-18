@@ -210,6 +210,26 @@
 
     .ltrk-msg { padding: 40px 20px; text-align: center; color: var(--soft); font-size: 15px; background: #fafafa; border-radius: 8px; border: 1px dashed var(--rule); }
 
+    /* Low-Viz Footer */
+    .ltrk-footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--rule);
+      text-align: center;
+      font-size: 13px;
+      color: #94a3b8; /* Muted gray */
+    }
+    .ltrk-footer a {
+      color: inherit;
+      text-decoration: underline;
+      text-decoration-color: #cbd5e1;
+      transition: color 0.15s, text-decoration-color 0.15s;
+    }
+    .ltrk-footer a:hover {
+      color: var(--seal);
+      text-decoration-color: var(--seal);
+    }
+
     @media (max-width: 820px) {
       .ltrk-header-grid { grid-template-columns: 1fr; }
       .ltrk-map-card { max-width: 400px; margin: 0 auto; }
@@ -266,6 +286,12 @@
     <div id="ltrk-out" aria-live="polite">
       <div class="ltrk-msg">Loading tracker data...</div>
     </div>
+
+    <!-- Low-Viz Footer -->
+    <div class="ltrk-footer">
+      This tracker was developed by <a href="https://brennanschaffner.com" target="_blank" rel="noopener noreferrer">Brennan Schaffner</a> while being supported as a <a href="https://techandsociety.georgetown.edu/projects/fritz-family-fellows-program/" target="_blank" rel="noopener noreferrer">Fritz Fellow</a> at <a href="https://kgi.georgetown.edu/" target="_blank" rel="noopener noreferrer">KGI</a> and <a href="https://cct.georgetown.edu/" target="_blank" rel="noopener noreferrer">CCT</a>, with substantial contribution from <a href="https://www.linkedin.com/in/arjunadriandsouza95/" target="_blank" rel="noopener noreferrer">Arjun D'Souza</a> and <a href="https://www.linkedin.com/in/sarahh-chao" target="_blank" rel="noopener noreferrer">Sarah Chao</a>.
+    </div>
+
   </div>
 </div>
 
@@ -456,7 +482,6 @@
     svg.selectAll("*").remove();
 
     var statesFeatures = topojson.feature(usMapData, usMapData.objects.states).features;
-    // Keep only features we have mapped in our constants
     statesFeatures = statesFeatures.filter(function(f) { return STATE_NAME_TO_ABBR[f.properties.name]; });
 
     var pathGen = d3.geoPath();
@@ -480,9 +505,7 @@
     ];
 
     proxyData.forEach(function(loc) {
-       // Check if feature exists natively (like DC)
        var feature = statesFeatures.filter(function(f) { return f.properties.name === loc.name; })[0];
-       // If no feature exists natively (like Guam), create a synthetic one so datum works
        if (!feature) {
          feature = { properties: { name: loc.name } };
        }
@@ -519,14 +542,13 @@
        .style("pointer-events", "none")
        .style("fill", "none");
 
-    // Attach Smart Tooltips & Full-Circuit Hover logic to everything with .state-path
+    // Attach Smart Tooltips & Full-Circuit Hover logic
     svg.selectAll(".state-path")
        .on("mouseover", function(event, d) {
           var name = d.properties.name;
           var circ = getCircuit(name);
           var isCircMode = state.mapMode === "circuit";
           
-          // Highlight logic
           svg.selectAll(".state-path").classed("is-hovered", function(p) {
              if (isCircMode) {
                return getCircuit(p.properties.name) === circ && circ !== "none";
@@ -534,7 +556,6 @@
              return p.properties.name === name;
           });
           
-          // Tooltip content
           var tooltip = $("ltrk-map-tooltip");
           if (tooltip) {
              tooltip.textContent = isCircMode ? (circ !== "none" ? circ : name) : name;
@@ -594,7 +615,7 @@
           circDropdown.value = state.circ;
         }
       }
-      initFilters(); // Rebuilds the dropdowns cleanly with the new selection
+      initFilters(); 
       renderTable();
     });
 
@@ -620,7 +641,6 @@
          return state.st && d.properties.name === state.st;
       });
 
-      // Draw standard inner state borders
       borderPath
         .datum(topojson.mesh(usMapData, usMapData.objects.states, function(a, b) { return a !== b; }))
         .attr("d", pathGen)
@@ -629,7 +649,6 @@
         .attr("stroke-linejoin", "round");
         
     } else {
-      // Create a string of active circuits to securely fuzzy match against (e.g. "8th Circuit" vs "8th Circuit Court")
       var circuitsWithCasesStr = activeRecords.map(function(r) { return r.circuit; }).join("|");
       
       var activeAbbrs = [];
@@ -651,13 +670,12 @@
          return activeAbbrs.indexOf(abbr) !== -1;
       });
 
-      // Draw strong circuit-only borders, erase inner state lines
       borderPath
         .datum(topojson.mesh(usMapData, usMapData.objects.states, function(a, b) {
            return a === b || getCircuit(a.properties.name) !== getCircuit(b.properties.name);
         }))
         .attr("d", pathGen)
-        .attr("stroke", "#475569") // Distinct dark slate
+        .attr("stroke", "#475569") 
         .attr("stroke-width", 1.5)
         .attr("stroke-linejoin", "round");
     }
@@ -870,7 +888,6 @@
   function renderTable() {
     var allCases = sorted(filtered());
     
-    // Split into active and superseded lists BEFORE generating count
     var mainList = allCases.filter(function(r) { return r.shortStatus !== "SUPERSEDED"; });
     var supersededList = allCases.filter(function(r) { return r.shortStatus === "SUPERSEDED"; });
 
@@ -949,20 +966,19 @@
     
     $("ltrk-f-state").addEventListener("change", function (e) {
       state.st = e.target.value;
-      initFilters(); // Re-sync dropdown options cleanly
+      initFilters(); 
       renderTable();
     });
     
     $("ltrk-f-circuit").addEventListener("change", function (e) {
       state.circ = e.target.value;
-      initFilters(); // Re-sync dropdown options cleanly
+      initFilters(); 
       renderTable();
     });
 
     $("ltrk-map-mode-state").addEventListener("click", function() {
       state.mapMode = "state";
       
-      // Clear selections when toggling modes
       state.circ = "";
       $("ltrk-f-circuit").value = "";
       
@@ -976,7 +992,6 @@
     $("ltrk-map-mode-circuit").addEventListener("click", function() {
       state.mapMode = "circuit";
       
-      // Clear selections when toggling modes
       state.st = "";
       $("ltrk-f-state").value = "";
       
