@@ -85,21 +85,27 @@
       display: block;
     }
 
-    /* Map Interactive Styles */
+    /* Map Interactive Styles (Color Hierarchy) */
     .state-path {
-      fill: #cbd5e1;
+      fill: #e2e8f0; /* Default Empty (Gray) */
       stroke: none;
       cursor: pointer;
       transition: fill 0.15s;
     }
     .state-path.is-hovered {
-      fill: #93c5fd;
+      fill: #cbd5e1; /* Hover Empty */
+    }
+    .state-path.has-cases {
+      fill: #bfdbfe; /* Has Cases (Light Blue) */
+    }
+    .state-path.has-cases.is-hovered {
+      fill: #93c5fd; /* Hover Has Cases */
     }
     .state-path.is-active {
-      fill: var(--seal);
+      fill: var(--seal) !important; /* Active Selection (Dark Blue) */
     }
     .state-path.is-active.is-hovered {
-      fill: #1d4ed8; 
+      fill: #1d4ed8 !important; /* Hover Active Selection */
     }
     
     .ltrk-map-tooltip {
@@ -602,7 +608,14 @@
     var borderPath = svg.select(".map-borders");
     var pathGen = d3.geoPath();
 
+    var activeRecords = records.filter(function(r) { return r.shortStatus !== "SUPERSEDED"; });
+
     if (state.mapMode === "state") {
+      var statesWithCases = activeRecords.map(function(r) { return r.stateName; });
+      
+      paths.classed("has-cases", function(d) {
+         return statesWithCases.indexOf(d.properties.name) !== -1;
+      });
       paths.classed("is-active", function(d) {
          return state.st && d.properties.name === state.st;
       });
@@ -616,6 +629,9 @@
         .attr("stroke-linejoin", "round");
         
     } else {
+      // Create a string of active circuits to securely fuzzy match against (e.g. "8th Circuit" vs "8th Circuit Court")
+      var circuitsWithCasesStr = activeRecords.map(function(r) { return r.circuit; }).join("|");
+      
       var activeAbbrs = [];
       if (state.circ) {
         Object.keys(CIRCUIT_MAP).forEach(function(circKey) {
@@ -624,6 +640,11 @@
           }
         });
       }
+
+      paths.classed("has-cases", function(d) {
+         var circ = getCircuit(d.properties.name);
+         return circ !== "none" && circuitsWithCasesStr.indexOf(circ) !== -1;
+      });
 
       paths.classed("is-active", function(d) {
          var abbr = STATE_NAME_TO_ABBR[d.properties.name];
