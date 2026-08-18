@@ -430,22 +430,10 @@
      .enter()
      .append("path")
      .attr("d", pathGen)
-     .on("click", function(event, d) {
-        var clickedName = d.properties.name;
-        if (state.mapMode === "state") {
-          state.st = (state.st === clickedName) ? "" : clickedName;
-          $("ltrk-f-state").value = state.st;
-        } else {
-          var targetCirc = getCircuit(clickedName);
-          state.circ = (state.circ === targetCirc) ? "" : targetCirc;
-          $("ltrk-f-circuit").value = state.circ;
-        }
-        renderTable();
-     })
      .append("title")
      .text(function(d) { return d.properties.name; });
 
-    // The boundary mesh path
+    // Boundary mesh path wrapper
     svg.append("path")
        .attr("class", "map-borders")
        .style("pointer-events", "none")
@@ -472,12 +460,17 @@
         .datum(topojson.mesh(usMapData, usMapData.objects.states, function(a, b) { return a !== b; }))
         .attr("d", pathGen)
         .attr("stroke", "#ffffff")
-        .attr("stroke-width", 1);
+        .attr("stroke-width", 1)
+        .attr("stroke-linejoin", "round");
         
     } else {
       var activeAbbrs = [];
       if (state.circ) {
-        activeAbbrs = CIRCUIT_MAP[state.circ] || [];
+        Object.keys(CIRCUIT_MAP).forEach(function(circKey) {
+          if (state.circ.indexOf(circKey) !== -1) {
+            activeAbbrs = CIRCUIT_MAP[circKey];
+          }
+        });
       }
 
       paths
@@ -489,11 +482,12 @@
 
       borderPath
         .datum(topojson.mesh(usMapData, usMapData.objects.states, function(a, b) {
-           return getCircuit(a.properties.name) !== getCircuit(b.properties.name);
+           return a === b || getCircuit(a.properties.name) !== getCircuit(b.properties.name);
         }))
         .attr("d", pathGen)
-        .attr("stroke", "#ffffff")
-        .attr("stroke-width", 1.5);
+        .attr("stroke", "#64748b") // Distinct dark slate borders
+        .attr("stroke-width", 1.5)
+        .attr("stroke-linejoin", "round");
     }
   }
 
@@ -782,6 +776,54 @@
       $("ltrk-map-mode-state").setAttribute("aria-pressed", "false");
       $("ltrk-map-mode-circuit").setAttribute("aria-pressed", "true");
       updateMapHighlights();
+    });
+
+    // Handle clicks on map paths
+    $("ltrk-map-svg").addEventListener("click", function(e) {
+      var path = e.target.closest("path");
+      if (!path || path.classList.contains("map-borders")) return;
+      
+      var d = d3.select(path).datum();
+      if (!d || !d.properties) return;
+
+      var clickedName = d.properties.name;
+
+      if (state.mapMode === "state") {
+        state.st = (state.st === clickedName) ? "" : clickedName;
+        
+        // Dynamically add state to dropdown if it isn't listed yet
+        var stDropdown = $("ltrk-f-state");
+        var allSts = Array.prototype.map.call(stDropdown.options, function(o) { return o.value; });
+        if (allSts.indexOf(state.st) === -1 && state.st !== "") {
+           stDropdown.insertAdjacentHTML('beforeend', '<option value="'+esc(state.st)+'">'+esc(state.st)+'</option>');
+        }
+        stDropdown.value = state.st;
+
+      } else {
+        var targetCircKey = getCircuit(clickedName);
+        if (targetCircKey !== "none") {
+          var circDropdown = $("ltrk-f-circuit");
+          var allCircs = Array.prototype.map.call(circDropdown.options, function(o) { return o.value; });
+          
+          var exactCirc = targetCircKey;
+          // Fuzzy match against dropdown options
+          for (var i = 0; i < allCircs.length; i++) {
+            if (allCircs[i].indexOf(targetCircKey) !== -1) {
+              exactCirc = allCircs[i];
+              break;
+            }
+          }
+
+          state.circ = (state.circ === exactCirc) ? "" : exactCirc;
+
+          // Dynamically add circuit to dropdown if it isn't listed yet
+          if (allCircs.indexOf(state.circ) === -1 && state.circ !== "") {
+            circDropdown.insertAdjacentHTML('beforeend', '<option value="'+esc(state.circ)+'">'+esc(state.circ)+'</option>');
+          }
+          circDropdown.value = state.circ;
+        }
+      }
+      renderTable();
     });
 
     $("ltrk-out").addEventListener("click", function (e) {
