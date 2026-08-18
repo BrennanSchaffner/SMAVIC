@@ -8,6 +8,10 @@
   <!-- Custom Favicon -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 
+  <!-- D3 & TopoJSON for Realistic Mapping -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
+
   <style>
     .ltrk {
       --paper: #ffffff;
@@ -32,7 +36,7 @@
     /* Header Layout with Map */
     .ltrk-header-grid {
       display: grid;
-      grid-template-columns: 1fr minmax(280px, 340px);
+      grid-template-columns: 1fr minmax(320px, 400px);
       gap: 24px;
       align-items: start;
       margin-bottom: 20px;
@@ -48,7 +52,7 @@
       background: #f8fafc;
       border: 1px solid var(--rule);
       border-radius: 8px;
-      padding: 12px;
+      padding: 16px;
       text-align: center;
     }
     .ltrk-map-toggle {
@@ -56,12 +60,12 @@
       background: #e2e8f0;
       padding: 2px;
       border-radius: 6px;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
     .ltrk-map-toggle button {
       border: 0;
       background: transparent;
-      padding: 4px 12px;
+      padding: 6px 14px;
       font-size: 12px;
       font-weight: 600;
       color: var(--soft);
@@ -77,21 +81,14 @@
     .ltrk-us-map {
       width: 100%;
       height: auto;
-      max-height: 180px;
       display: block;
     }
-    .ltrk-us-map path {
-      fill: #cbd5e1;
-      stroke: #ffffff;
-      stroke-width: 1;
+    .map-states-group path {
       cursor: pointer;
-      transition: fill 0.15s, transform 0.15s;
+      transition: fill 0.15s;
     }
-    .ltrk-us-map path:hover {
-      fill: #93c5fd;
-    }
-    .ltrk-us-map path.is-active {
-      fill: var(--seal) !important;
+    .map-states-group path:hover {
+      fill: #93c5fd !important;
     }
 
     /* Controls */
@@ -181,7 +178,7 @@
 
     @media (max-width: 820px) {
       .ltrk-header-grid { grid-template-columns: 1fr; }
-      .ltrk-map-card { max-width: 360px; margin: 0 auto; }
+      .ltrk-map-card { max-width: 400px; margin: 0 auto; }
       .ltrk-table thead { position: absolute; left: -9999px; }
       .ltrk-table, .ltrk-table tbody, .ltrk-table tr, .ltrk-table td { display: block; width: 100%; }
       .ltrk-table tr { border-bottom: 2px solid var(--rule); }
@@ -204,13 +201,13 @@
         <a href="#" id="ltrk-suggest" class="ltrk-suggest-link" target="_blank" rel="noopener noreferrer"></a>
       </div>
 
-      <!-- Interactive Map Component -->
+      <!-- Interactive D3 Map Component -->
       <div class="ltrk-map-card">
         <div class="ltrk-map-toggle">
           <button id="ltrk-map-mode-state" type="button" aria-pressed="true">States</button>
           <button id="ltrk-map-mode-circuit" type="button" aria-pressed="false">Circuits</button>
         </div>
-        <svg id="ltrk-map-svg" class="ltrk-us-map" viewBox="0 0 960 600"></svg>
+        <svg id="ltrk-map-svg" class="ltrk-us-map" viewBox="0 0 975 610"></svg>
       </div>
     </div>
 
@@ -274,24 +271,18 @@
     dateLocale: "en-US"
   };
 
-  var STATES = [
-    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
-    "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas",
-    "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",
-    "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
-    "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon",
-    "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah",
-    "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming", "District of Columbia"
-  ];
-
-  var STATE_ABBR = {
-    "AL":"Alabama","AK":"Alaska","AZ":"Arizona","AR":"Arkansas","CA":"California","CO":"Colorado","CT":"Connecticut",
-    "DE":"Delaware","FL":"Florida","GA":"Georgia","HI":"Hawaii","ID":"Idaho","IL":"Illinois","IN":"Indiana","IA":"Iowa",
-    "KS":"Kansas","KY":"Kentucky","LA":"Louisiana","ME":"Maine","MD":"Maryland","MA":"Massachusetts","MI":"Michigan",
-    "MN":"Minnesota","MS":"Mississippi","MO":"Missouri","MT":"Montana","NE":"Nebraska","NV":"Nevada","NH":"New Hampshire",
-    "NJ":"New Jersey","NM":"New Mexico","NY":"New York","NC":"North Carolina","ND":"North Dakota","OH":"Ohio","OK":"Oklahoma",
-    "OR":"Oregon","PA":"Pennsylvania","RI":"Rhode Island","SC":"South Carolina","SD":"South Dakota","TN":"Tennessee","TX":"Texas",
-    "UT":"Utah","VT":"Vermont","VA":"Virginia","WA":"Washington","WV":"West Virginia","WI":"Wisconsin","WY":"Wyoming","DC":"District of Columbia"
+  var STATE_NAME_TO_ABBR = {
+    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "California": "CA",
+    "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "Florida": "FL", "Georgia": "GA",
+    "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",
+    "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS", "Missouri": "MO",
+    "Montana": "MT", "Nebraska": "NE", "Nevada": "NV", "New Hampshire": "NH", "New Jersey": "NJ",
+    "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH",
+    "Oklahoma": "OK", "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+    "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Vermont": "VT",
+    "Virginia": "VA", "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY",
+    "District of Columbia": "DC"
   };
 
   var CIRCUIT_MAP = {
@@ -309,64 +300,11 @@
     "D.C. Circuit": ["DC"]
   };
 
-  // SVG Paths for US States
-  var MAP_PATHS = {
-    "AL": "M 648 372 L 678 372 L 672 438 L 634 438 L 638 382 Z",
-    "AK": "M 100 480 L 180 480 L 180 560 L 100 560 Z",
-    "AZ": "M 200 320 L 278 332 L 254 428 L 182 410 Z",
-    "AR": "M 530 338 L 582 338 L 572 396 L 522 396 Z",
-    "CA": "M 100 210 L 158 228 L 192 376 L 126 398 L 82 278 Z",
-    "CO": "M 320 252 L 416 260 L 410 322 L 314 314 Z",
-    "CT": "M 834 192 L 852 192 L 850 206 L 832 206 Z",
-    "DE": "M 808 242 L 820 242 L 816 262 L 804 262 Z",
-    "FL": "M 672 438 L 744 438 L 766 502 L 728 502 L 702 458 Z",
-    "GA": "M 672 372 L 734 366 L 722 438 L 672 438 Z",
-    "HI": "M 220 500 L 290 500 L 290 550 L 220 550 Z",
-    "ID": "M 194 112 L 250 120 L 232 232 L 182 220 Z",
-    "IL": "M 580 232 L 618 228 L 608 304 L 570 300 Z",
-    "IN": "M 622 228 L 658 224 L 648 296 L 612 298 Z",
-    "IA": "M 494 198 L 568 202 L 560 258 L 486 254 Z",
-    "KS": "M 406 288 L 504 292 L 498 344 L 400 340 Z",
-    "KY": "M 626 278 L 712 268 L 700 306 L 614 312 Z",
-    "LA": "M 522 400 L 580 400 L 574 456 L 512 452 Z",
-    "ME": "M 868 102 L 902 110 L 888 160 L 854 152 Z",
-    "MD": "M 764 238 L 810 234 L 804 256 L 758 260 Z",
-    "MA": "M 830 174 L 872 170 L 868 188 L 826 192 Z",
-    "MI": "M 618 152 L 678 148 L 668 218 L 608 222 Z",
-    "MN": "M 480 112 L 558 118 L 548 198 L 470 192 Z",
-    "MS": "M 586 372 L 624 372 L 616 448 L 578 448 Z",
-    "MO": "M 508 258 L 576 262 L 566 338 L 498 334 Z",
-    "MT": "M 238 102 L 398 118 L 388 188 L 228 172 Z",
-    "NE": "M 390 220 L 492 226 L 486 282 L 384 276 Z",
-    "NV": "M 152 202 L 222 212 L 198 332 L 128 322 Z",
-    "NH": "M 846 138 L 862 138 L 856 182 L 840 182 Z",
-    "NJ": "M 816 208 L 832 208 L 824 252 L 808 252 Z",
-    "NM": "M 282 334 L 372 340 L 362 432 L 272 426 Z",
-    "NY": "M 772 160 L 836 154 L 826 208 L 762 214 Z",
-    "NC": "M 718 312 L 814 298 L 804 346 L 708 360 Z",
-    "ND": "M 398 120 L 488 126 L 480 180 L 390 174 Z",
-    "OH": "M 662 218 L 718 210 L 708 270 L 652 278 Z",
-    "OK": "M 388 340 L 512 344 L 504 394 L 380 390 Z",
-    "OR": "M 108 118 L 202 128 L 188 212 L 94 202 Z",
-    "PA": "M 746 202 L 814 196 L 806 238 L 738 244 Z",
-    "RI": "M 856 188 L 868 188 L 866 200 L 854 200 Z",
-    "SC": "M 708 352 L 766 344 L 754 398 L 696 406 Z",
-    "SD": "M 390 176 L 482 182 L 476 238 L 384 232 Z",
-    "TN": "M 606 314 L 712 302 L 704 340 L 598 352 Z",
-    "TX": "M 346 390 L 486 394 L 466 508 L 326 504 Z",
-    "UT": "M 226 210 L 312 218 L 302 314 L 216 306 Z",
-    "VT": "M 830 142 L 846 142 L 840 182 L 824 182 Z",
-    "VA": "M 732 258 L 808 248 L 798 296 L 722 306 Z",
-    "WA": "M 122 62 L 222 72 L 210 128 L 110 118 Z",
-    "WV": "M 718 238 L 758 232 L 748 276 L 708 282 Z",
-    "WI": "M 552 152 L 608 156 L 600 230 L 544 226 Z",
-    "WY": "M 248 168 L 378 180 L 368 252 L 238 240 Z"
-  };
-
+  var STATES = Object.keys(STATE_NAME_TO_ABBR);
   var $ = function (id) { return document.getElementById(id); };
 
   var headers = [], grid = [], idx = {}, records = [];
-  var loadError = null, lastSync = null;
+  var loadError = null, lastSync = null, usMapData = null;
 
   var state = { q: "", st: "", circ: "", sort: "dateFiled", dir: "desc", openKey: null, mapMode: "state" };
 
@@ -466,42 +404,97 @@
     return u + (u.indexOf("?") === -1 ? "?" : "&") + "_ts=" + Date.now();
   }
 
-  /* SVG Map Render & Highlights */
-  function renderMapSVG() {
-    var svg = $("ltrk-map-svg");
-    if (!svg) return;
-    
-    var html = "";
-    Object.keys(MAP_PATHS).forEach(function(code) {
-      html += '<path d="' + MAP_PATHS[code] + '" data-code="' + code + '"><title>' + (STATE_ABBR[code] || code) + '</title></path>';
+  function getCircuit(stateName) {
+    var abbr = STATE_NAME_TO_ABBR[stateName];
+    var targetCirc = null;
+    Object.keys(CIRCUIT_MAP).forEach(function(circ) {
+      if (CIRCUIT_MAP[circ].indexOf(abbr) !== -1) targetCirc = circ;
     });
-    svg.innerHTML = html;
+    return targetCirc || "none";
+  }
+
+  /* D3 Map Rendering */
+  function renderMapD3() {
+    if (!usMapData) return;
+    var svg = d3.select("#ltrk-map-svg");
+    svg.selectAll("*").remove();
+
+    var statesFeatures = topojson.feature(usMapData, usMapData.objects.states).features;
+    statesFeatures = statesFeatures.filter(function(f) { return STATE_NAME_TO_ABBR[f.properties.name]; });
+
+    var pathGen = d3.geoPath();
+    var g = svg.append("g").attr("class", "map-states-group");
+
+    g.selectAll("path")
+     .data(statesFeatures)
+     .enter()
+     .append("path")
+     .attr("d", pathGen)
+     .on("click", function(event, d) {
+        var clickedName = d.properties.name;
+        if (state.mapMode === "state") {
+          state.st = (state.st === clickedName) ? "" : clickedName;
+          $("ltrk-f-state").value = state.st;
+        } else {
+          var targetCirc = getCircuit(clickedName);
+          state.circ = (state.circ === targetCirc) ? "" : targetCirc;
+          $("ltrk-f-circuit").value = state.circ;
+        }
+        renderTable();
+     })
+     .append("title")
+     .text(function(d) { return d.properties.name; });
+
+    // The boundary mesh path
+    svg.append("path")
+       .attr("class", "map-borders")
+       .style("pointer-events", "none")
+       .style("fill", "none");
+
     updateMapHighlights();
   }
 
   function updateMapHighlights() {
-    var svg = $("ltrk-map-svg");
-    if (!svg) return;
+    if (!usMapData) return;
+    var svg = d3.select("#ltrk-map-svg");
+    var paths = svg.selectAll(".map-states-group path");
+    var borderPath = svg.select(".map-borders");
+    var pathGen = d3.geoPath();
 
-    var paths = svg.querySelectorAll("path");
-    var activeAbbrs = [];
+    if (state.mapMode === "state") {
+      paths
+        .attr("fill", function(d) {
+           return (state.st && d.properties.name === state.st) ? "var(--seal)" : "#cbd5e1";
+        })
+        .attr("stroke", "none");
 
-    if (state.mapMode === "state" && state.st) {
-      Object.keys(STATE_ABBR).forEach(function(code) {
-        if (STATE_ABBR[code] === state.st) activeAbbrs.push(code);
-      });
-    } else if (state.mapMode === "circuit" && state.circ) {
-      activeAbbrs = CIRCUIT_MAP[state.circ] || [];
-    }
-
-    paths.forEach(function(p) {
-      var code = p.getAttribute("data-code");
-      if (activeAbbrs.indexOf(code) !== -1) {
-        p.classList.add("is-active");
-      } else {
-        p.classList.remove("is-active");
+      borderPath
+        .datum(topojson.mesh(usMapData, usMapData.objects.states, function(a, b) { return a !== b; }))
+        .attr("d", pathGen)
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 1);
+        
+    } else {
+      var activeAbbrs = [];
+      if (state.circ) {
+        activeAbbrs = CIRCUIT_MAP[state.circ] || [];
       }
-    });
+
+      paths
+        .attr("fill", function(d) {
+           var abbr = STATE_NAME_TO_ABBR[d.properties.name];
+           return (activeAbbrs.indexOf(abbr) !== -1) ? "var(--seal)" : "#cbd5e1";
+        })
+        .attr("stroke", "none"); // Hides internal borders inside circuits
+
+      borderPath
+        .datum(topojson.mesh(usMapData, usMapData.objects.states, function(a, b) {
+           return getCircuit(a.properties.name) !== getCircuit(b.properties.name);
+        }))
+        .attr("d", pathGen)
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 1.5);
+    }
   }
 
   function ingest(text) {
@@ -531,7 +524,7 @@
         .sort(function(a, b) { return a - b; })[0];
 
       if (oldestCheck) {
-        txtChecked.textContent = "All cases current through: " + fmtDate(oldestCheck);
+        txtChecked.textContent = "Updated: " + fmtDate(oldestCheck);
       } else {
         txtChecked.textContent = "";
       }
@@ -539,27 +532,31 @@
   }
 
   function load() {
-    return fetch(url(), { credentials: "omit", cache: "no-store" })
-      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
-      .then(function (text) {
-        ingest(text);
-        lastSync = new Date();
-        buildRecords();
-        $("ltrk-title").textContent = CONFIG.title;
-        $("ltrk-blurb").textContent = CONFIG.blurb;
-        $("ltrk-suggest").textContent = CONFIG.suggestionText;
-        $("ltrk-suggest").href = CONFIG.suggestionLink;
-        
-        renderMapSVG();
-        initFilters();
-        $("ltrk-controls").hidden = false;
-        $("ltrk-statusline").hidden = false;
-        renderTable();
-      })
-      .catch(function (e) {
-        loadError = (e && e.message) ? e.message : String(e);
-        fail();
-      });
+    Promise.all([
+      fetch(url(), { credentials: "omit", cache: "no-store" }).then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); }),
+      fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-albers-10m.json").then(function(r) { return r.json(); })
+    ])
+    .then(function (results) {
+      ingest(results[0]);
+      usMapData = results[1];
+      lastSync = new Date();
+      buildRecords();
+      
+      $("ltrk-title").textContent = CONFIG.title;
+      $("ltrk-blurb").textContent = CONFIG.blurb;
+      $("ltrk-suggest").textContent = CONFIG.suggestionText;
+      $("ltrk-suggest").href = CONFIG.suggestionLink;
+      
+      renderMapD3();
+      initFilters();
+      $("ltrk-controls").hidden = false;
+      $("ltrk-statusline").hidden = false;
+      renderTable();
+    })
+    .catch(function (e) {
+      loadError = (e && e.message) ? e.message : String(e);
+      fail();
+    });
   }
 
   function fail() {
@@ -773,7 +770,6 @@
       renderTable();
     });
 
-    // Map Toggle Buttons
     $("ltrk-map-mode-state").addEventListener("click", function() {
       state.mapMode = "state";
       $("ltrk-map-mode-state").setAttribute("aria-pressed", "true");
@@ -786,37 +782,6 @@
       $("ltrk-map-mode-state").setAttribute("aria-pressed", "false");
       $("ltrk-map-mode-circuit").setAttribute("aria-pressed", "true");
       updateMapHighlights();
-    });
-
-    // Map Click Interaction
-    $("ltrk-map-svg").addEventListener("click", function(e) {
-      var path = e.target.closest("path");
-      if (!path) return;
-      var code = path.getAttribute("data-code");
-      var clickedState = STATE_ABBR[code];
-
-      if (state.mapMode === "state") {
-        if (state.st === clickedState) {
-          state.st = "";
-        } else {
-          state.st = clickedState;
-        }
-        $("ltrk-f-state").value = state.st;
-      } else {
-        // Circuit Mode: Find which circuit this state belongs to
-        var targetCirc = "";
-        Object.keys(CIRCUIT_MAP).forEach(function(circ) {
-          if (CIRCUIT_MAP[circ].indexOf(code) !== -1) targetCirc = circ;
-        });
-
-        if (state.circ === targetCirc) {
-          state.circ = "";
-        } else {
-          state.circ = targetCirc;
-        }
-        $("ltrk-f-circuit").value = state.circ;
-      }
-      renderTable();
     });
 
     $("ltrk-out").addEventListener("click", function (e) {
