@@ -496,11 +496,12 @@
      .attr("d", pathGen);
 
     // Proxy Box Definitions - stacked vertically below DC on the right
+    // Updated with more spacing and larger radius/fonts
     var proxyData = [
-      { name: "District of Columbia", x: 935, y: 300, label: "DC", hasLine: true },
-      { name: "Puerto Rico", x: 935, y: 350, label: "PR", hasLine: false },
-      { name: "U.S. Virgin Islands", x: 935, y: 400, label: "VI", hasLine: false },
-      { name: "Guam", x: 935, y: 450, label: "GU", hasLine: false },
+      { name: "District of Columbia", x: 935, y: 280, label: "DC", hasLine: true },
+      { name: "Puerto Rico", x: 935, y: 335, label: "PR", hasLine: false },
+      { name: "U.S. Virgin Islands", x: 935, y: 390, label: "VI", hasLine: false },
+      { name: "Guam", x: 935, y: 445, label: "GU", hasLine: false },
       { name: "Northern Mariana Islands", x: 935, y: 500, label: "MP", hasLine: false }
     ];
 
@@ -524,12 +525,12 @@
           .datum(feature)
           .attr("class", "state-path proxy-circle")
           .attr("cx", loc.x).attr("cy", loc.y)
-          .attr("r", 20); // increased radius for larger text
+          .attr("r", 24); // Bumped to 24px
 
        gProxy.append("text")
-          .attr("x", loc.x).attr("y", loc.y + 5) // centered text vertically
+          .attr("x", loc.x).attr("y", loc.y + 6) // Center text with larger font
           .attr("text-anchor", "middle")
-          .attr("font-size", "15px") // increased font size
+          .attr("font-size", "18px") // Bumped to 18px
           .attr("font-weight", "700")
           .attr("fill", "#0f172a")
           .style("pointer-events", "none")
