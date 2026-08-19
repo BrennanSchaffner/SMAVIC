@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lawsuits Against Age Verification Laws in the US</title>
+  <title>Lawsuits Challenging Age Verification Laws in the US</title>
   
   <!-- Custom Favicon -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -300,7 +300,7 @@
   "use strict";
 
   var CONFIG = {
-    title: "Lawsuits Against Age Verification Laws in the US",
+    title: "Lawsuits Challenging Age Verification Laws in the US",
     blurb: "This regularly updated tracker includes all lawsuits challenging state statutes that require social media platforms to verify their users' ages. There may be more such laws that have passed than those included here. I only include them once they are challenged in court.",
     suggestionLink: "https://forms.gle/dV8JeVPAQ9C8w2Qx8",
     suggestionText: "Suggest an addition or edit",
@@ -524,12 +524,12 @@
           .datum(feature)
           .attr("class", "state-path proxy-circle")
           .attr("cx", loc.x).attr("cy", loc.y)
-          .attr("r", 18);
+          .attr("r", 20); // increased radius for larger text
 
        gProxy.append("text")
-          .attr("x", loc.x).attr("y", loc.y + 4.5)
+          .attr("x", loc.x).attr("y", loc.y + 5) // centered text vertically
           .attr("text-anchor", "middle")
-          .attr("font-size", "13px")
+          .attr("font-size", "15px") // increased font size
           .attr("font-weight", "700")
           .attr("fill", "#0f172a")
           .style("pointer-events", "none")
