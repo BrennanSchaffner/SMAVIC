@@ -82,6 +82,11 @@ function onEdit(e) {
 
   const logSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CHANGELOG_SHEET_NAME);
   if (logSheet) {
+    // If the sheet is completely empty, auto-generate the headers on row 1
+    if (logSheet.getLastRow() === 0) {
+      logSheet.appendRow(["Timestamp", "Case Action", "Field", "Old Value", "New Value", "Unique Key"]);
+      logSheet.getRange("A1:F1").setFontWeight("bold");
+    }
     logSheet.appendRow([new Date(), caseName, colName, oldVal, newVal, uniqueRowKey]);
   }
 }
@@ -129,7 +134,6 @@ function diffWords(oldStr, newStr, isHtml) {
       } else if (res[k].type === -1) {
         out.push(isHtml ? `<del style="color: #c026d3; text-decoration: line-through;">${word}</del>` : `~${word}~`);
       } else {
-        // Changed to bold green text without underline
         out.push(isHtml ? `<ins style="font-weight:bold; color: #16a34a; text-decoration: none;">${word}</ins>` : `*${word}*`);
       }
     }
@@ -153,7 +157,7 @@ function sendDigest() {
   }
 
   const lastRow = logSheet.getLastRow();
-  if (lastRow === 0) {
+  if (lastRow <= 1) { // Checks if only headers exist
     ui.alert("No pending updates to send!");
     return;
   }
@@ -164,8 +168,9 @@ function sendDigest() {
     return;
   }
 
-  const lastCol = Math.max(logSheet.getLastColumn(), 5);
-  const changes = logSheet.getRange(1, 1, lastRow, lastCol).getValues();
+  const lastCol = Math.max(logSheet.getLastColumn(), 6);
+  // Start reading from row 2 to ignore headers
+  const changes = logSheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
   
   const trackerData = conf.data;
   const trackerRichData = trackerSheet.getDataRange().getRichTextValues();
@@ -191,7 +196,6 @@ function sendDigest() {
     }
   });
 
-  // Updated Intro string for email with legend
   let emailHtml = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 900px; margin: 0 auto; color: #111827;">
       <p style="color: #6b7280; margin-bottom: 32px; font-size: 16px;">
@@ -354,7 +358,6 @@ function sendDigest() {
     gridFields.forEach(f => {
       let val = getHtmlField(caseChanges, f[1], rIdx);
       if (val !== "-" && val !== "") {
-        // No explicit [Updated] tag for email since colors make it obvious
         emailHtml += `
           <tr>
             <td style="padding: 10px 16px 10px 0; width: 160px; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; vertical-align: top; border-bottom: 1px solid #f3f4f6;">${f[0]}</td>
@@ -369,23 +372,20 @@ function sendDigest() {
     let caseBlocks = [];
     let caseText = `*${caseName}*\n\n`;
 
-    // Always include Status 
     let statusBoxSlack = getSlackField(caseChanges, "LONG STATUS", rIdx);
     if (statusBoxSlack && statusBoxSlack !== "-") {
       let statusLabel = caseChanges["LONG STATUS"] ? `*[Changed]* *Status:*` : `*Status:*`;
       caseText += `${statusLabel}\n> ${statusBoxSlack.replace(/\n/g, "\n> ")}\n\n`;
     }
 
-    // Always include Statute
     let statuteSlack = getSlackField(caseChanges, "CHALLENGED STATUTE", rIdx);
     if (statuteSlack && statuteSlack !== "-") {
       let statuteLabel = caseChanges["CHALLENGED STATUTE"] ? `*[Changed]* *Statute:*` : `*Statute:*`;
       caseText += `${statuteLabel}\n${statuteSlack}\n\n`;
     }
 
-    // Include other fields ONLY if they changed
     gridFields.forEach(f => {
-      if (f[1] === "CHALLENGED STATUTE") return; // Handled above
+      if (f[1] === "CHALLENGED STATUTE") return; 
       if (caseChanges[f[1]]) {
         let val = getSlackField(caseChanges, f[1], rIdx);
         if (val && val !== "-") {
@@ -394,7 +394,6 @@ function sendDigest() {
       }
     });
     
-    // Chunk just in case the length exceeds Slack's 3000-character limit per block
     if (caseText.length > 2800) {
         let chunks = caseText.match(/[\s\S]{1,2800}/g);
         chunks.forEach(c => {
@@ -412,11 +411,11 @@ function sendDigest() {
 
   if (casesProcessed === 0) {
     ui.alert("Warning", "Changes were found in the log, but no matching cases exist in the tracker anymore. The log will be cleared.", ui.ButtonSet.OK);
-    logSheet.clear();
+    // Delete data rows, preserve headers
+    if (lastRow > 1) { logSheet.deleteRows(2, lastRow - 1); }
     return;
   }
 
-  // Sort out Emails and Webhooks
   let emails = [];
   let webhooks = [];
   
@@ -434,7 +433,6 @@ function sendDigest() {
 
   let errors = [];
 
-  // Send to Slack
   if (webhooks.length > 0) {
     const chunkSize = 40; 
     for (let i = 0; i < slackBlocks.length; i += chunkSize) {
@@ -452,7 +450,6 @@ function sendDigest() {
     }
   }
 
-  // Send Emails
   if (emails.length > 0) {
     try {
       MailApp.sendEmail({
@@ -471,6 +468,9 @@ function sendDigest() {
     return; 
   }
 
-  logSheet.clear();
+  // Clear only data rows to preserve headers!
+  if (lastRow > 1) {
+    logSheet.deleteRows(2, lastRow - 1);
+  }
   ui.alert("Success!", "Updates have been perfectly formatted and sent to Slack and Email.", ui.ButtonSet.OK);
 }
