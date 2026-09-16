@@ -301,7 +301,7 @@
 
   var CONFIG = {
     title: "Lawsuits Challenging Age Verification Laws in the US",
-    blurb: "This regularly updated tracker includes all federal lawsuits challenging state statutes that require social media platforms to verify their users' ages. There may be more such laws that have passed than those included here; I only include them once they are challenged in federal court. As currently maintained, statutes targeting age verification on adult content platforms or app stores are excluded.",
+    blurb: "This regularly updated tracker includes all federal lawsuits challenging state statutes that require social media platforms to verify their users' ages. There may be more such laws that have passed than those included here; I only include them once they are challenged in court. As currently maintained, statutes targeting age verification on adult content platforms or app stores are excluded.",
     suggestionLink: "https://forms.gle/dV8JeVPAQ9C8w2Qx8",
     suggestionText: "Suggest an addition or edit",
     dataUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1XzokpCbqU2n-vr56u3q4oQJZ0rnd1MF8BuQ9JPp_IqxYJZRyVHNgnR63loG5Z6R3Ke7-2B63bsXx/pub?gid=1317314093&single=true&output=csv",
@@ -495,8 +495,7 @@
      .attr("class", "state-path")
      .attr("d", pathGen);
 
-    // Proxy Box Definitions - stacked vertically below DC on the right
-    // Updated with more spacing and larger radius/fonts
+    // Proxy Box Definitions
     var proxyData = [
       { name: "District of Columbia", x: 935, y: 280, label: "DC", hasLine: true },
       { name: "Puerto Rico", x: 935, y: 335, label: "PR", hasLine: false },
@@ -525,12 +524,12 @@
           .datum(feature)
           .attr("class", "state-path proxy-circle")
           .attr("cx", loc.x).attr("cy", loc.y)
-          .attr("r", 24); // Bumped to 24px
+          .attr("r", 24); 
 
        gProxy.append("text")
-          .attr("x", loc.x).attr("y", loc.y + 6) // Center text with larger font
+          .attr("x", loc.x).attr("y", loc.y + 6) 
           .attr("text-anchor", "middle")
-          .attr("font-size", "18px") // Bumped to 18px
+          .attr("font-size", "18px") 
           .attr("font-weight", "700")
           .attr("fill", "#0f172a")
           .style("pointer-events", "none")
@@ -650,7 +649,8 @@
         .attr("stroke-linejoin", "round");
         
     } else {
-      var circuitsWithCasesStr = activeRecords.map(function(r) { return r.circuit; }).join("|");
+      // Highlight map using filterCircuit, which infers geography
+      var circuitsWithCasesStr = activeRecords.map(function(r) { return r.filterCircuit; }).join("|");
       
       var activeAbbrs = [];
       if (state.circ) {
@@ -765,9 +765,10 @@
       var shortStatus = get("shortStatus").toUpperCase();
       var key = [base, get("districtDocket"), amendM ? amendM[1] : "", i].join("|").toLowerCase();
       
-      var rawCirc = get("circuit");
-      var geoCirc = getCircuit(stateName);
-      var finalCirc = rawCirc || (geoCirc !== "none" ? geoCirc : "");
+      // SEPARATE DISPLAY FROM FILTERING
+      var rawCirc = get("circuit"); // strictly what is in the sheet for display
+      var geoCirc = getCircuit(stateName); // mapping fallback for filtering
+      var filterCirc = rawCirc || (geoCirc !== "none" ? geoCirc : "");
 
       return {
         i: i, key: key, raw: r,
@@ -780,7 +781,8 @@
         district: get("district"), 
         districtDocket: get("districtDocket"), districtUrl: get("districtUrl"),
         districtDecision: get("districtDecision"), appealingParty: get("appealingParty"),
-        circuit: finalCirc, 
+        circuit: rawCirc,               // Blank if no appeal
+        filterCircuit: filterCirc,      // Inferred for dropdowns/map
         appealsDocket: get("appealsDocket"), appealsUrl: get("appealsUrl"),
         circuitDecision: get("circuitDecision"), 
         scotusDocket: get("scotusDocket"), scotusUrl: get("scotusUrl"),
@@ -797,7 +799,8 @@
     }
     stVals.sort(function(a,b) { return a.localeCompare(b); });
     
-    var circVals = uniq(function (r) { return r.circuit; });
+    // Build the dropdown using the inferred filterCircuit
+    var circVals = uniq(function (r) { return r.filterCircuit; });
     if (state.circ && circVals.indexOf(state.circ) === -1) {
       circVals.push(state.circ);
     }
@@ -834,7 +837,8 @@
     return records.filter(function (r) {
       if (q) { if (r.hay.indexOf(q) === -1) return false; }
       if (state.st) { if (r.stateName !== state.st) return false; }
-      if (state.circ) { if (r.circuit !== state.circ) return false; }
+      // Filter based on the inferred filterCircuit, not the display circuit
+      if (state.circ) { if (r.filterCircuit !== state.circ) return false; }
       return true;
     });
   }
@@ -944,6 +948,7 @@
       ["District Docket", makeLink(r.districtDocket, r.districtUrl)],
       ["District Decision", esc(r.districtDecision)],
       ["Appealing Party", esc(r.appealingParty)],
+      // Displays r.circuit (which is raw), preserving blank space for unappealed cases
       ["Circuit", esc(r.circuit)],
       ["Appeals Docket", makeLink(r.appealsDocket, r.appealsUrl)],
       ["Circuit Decision", esc(r.circuitDecision)],
