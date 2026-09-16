@@ -287,9 +287,17 @@
       <div class="ltrk-msg">Loading tracker data...</div>
     </div>
 
-    <!-- Low-Viz Footer -->
+<!-- Low-Viz Footer -->
     <div class="ltrk-footer">
-      This tracker was developed by <a href="https://brennanschaffner.com" target="_blank" rel="noopener noreferrer">Brennan Schaffner</a> while being supported as a <a href="https://techandsociety.georgetown.edu/projects/fritz-family-fellows-program/" target="_blank" rel="noopener noreferrer">Fritz Fellow</a> at <a href="https://kgi.georgetown.edu/" target="_blank" rel="noopener noreferrer">KGI</a> and <a href="https://cct.georgetown.edu/" target="_blank" rel="noopener noreferrer">CCT</a>, with substantial contribution from <a href="https://www.linkedin.com/in/arjunadriandsouza95/" target="_blank" rel="noopener noreferrer">Arjun D'Souza</a> and <a href="https://www.linkedin.com/in/sarahh-chao" target="_blank" rel="noopener noreferrer">Sarah Chao</a> and reliance on <a href="https://www.courtlistener.com/" target="_blank" rel="noopener noreferrer">CourtListener</a> by <a href="https://free.law/" target="_blank" rel="noopener noreferrer">Free Law Project</a>.
+      <p style="margin-bottom: 12px;">
+        This tracker was developed by <a href="https://brennanschaffner.com" target="_blank" rel="noopener noreferrer">Brennan Schaffner</a> while being supported as a <a href="https://techandsociety.georgetown.edu/projects/fritz-family-fellows-program/" target="_blank" rel="noopener noreferrer">Fritz Fellow</a> at <a href="https://kgi.georgetown.edu/" target="_blank" rel="noopener noreferrer">KGI</a> and <a href="https://cct.georgetown.edu/" target="_blank" rel="noopener noreferrer">CCT</a>, with substantial contribution from <a href="https://www.linkedin.com/in/arjunadriandsouza95/" target="_blank" rel="noopener noreferrer">Arjun D'Souza</a> and <a href="https://www.linkedin.com/in/sarahh-chao" target="_blank" rel="noopener noreferrer">Sarah Chao</a> and reliance on <a href="https://www.courtlistener.com/" target="_blank" rel="noopener noreferrer">CourtListener</a> by <a href="https://free.law/" target="_blank" rel="noopener noreferrer">Free Law Project</a>.
+      </p>
+      <p style="font-size: 12px; color: #94a3b8; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank">
+          <img alt="Creative Commons License" style="border-width:0; opacity: 0.7;" src="https://i.creativecommons.org/l/by-nc/4.0/80x15.png" />
+        </a>
+        <span>This compilation is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank" style="color: #cbd5e1;">Creative Commons Attribution-NonCommercial 4.0 License</a>.</span>
+      </p>
     </div>
 
   </div>
@@ -301,7 +309,7 @@
 
   var CONFIG = {
     title: "Lawsuits Challenging Age Verification Laws in the US",
-    blurb: "This regularly updated tracker includes all federal lawsuits challenging state statutes that require social media platforms to verify their users' ages. There may be more such laws that have passed than those included here; I only include them once they are challenged in court. As currently maintained, statutes targeting age verification on adult content platforms or app stores are excluded.",
+    blurb: "This regularly updated tracker includes all lawsuits challenging state statutes that require social media platforms to verify their users' ages. There may be more such laws that have passed than those included here; I only include them once they are challenged in court. As currently maintained, statutes targeting age verification on adult content platforms or app stores are excluded.",
     suggestionLink: "https://forms.gle/dV8JeVPAQ9C8w2Qx8",
     suggestionText: "Suggest an addition or edit",
     dataUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1XzokpCbqU2n-vr56u3q4oQJZ0rnd1MF8BuQ9JPp_IqxYJZRyVHNgnR63loG5Z6R3Ke7-2B63bsXx/pub?gid=1317314093&single=true&output=csv",
@@ -347,19 +355,20 @@
     "Northern Mariana Islands": "MP"
   };
 
+  // Restored full formal names so they match the spreadsheet precisely!
   var CIRCUIT_MAP = {
-    "1st Circuit": ["ME", "NH", "MA", "RI", "PR"],
-    "2nd Circuit": ["VT", "NY", "CT"],
-    "3rd Circuit": ["PA", "NJ", "DE", "VI"],
-    "4th Circuit": ["MD", "VA", "WV", "NC", "SC"],
-    "5th Circuit": ["TX", "LA", "MS"],
-    "6th Circuit": ["MI", "OH", "KY", "TN"],
-    "7th Circuit": ["WI", "IL", "IN"],
-    "8th Circuit": ["ND", "SD", "NE", "MN", "IA", "MO", "AR"],
-    "9th Circuit": ["WA", "OR", "ID", "MT", "NV", "CA", "AZ", "AK", "HI", "GU", "MP"],
-    "10th Circuit": ["WY", "UT", "CO", "NM", "KS", "OK"],
-    "11th Circuit": ["AL", "GA", "FL"],
-    "D.C. Circuit": ["DC"]
+    "1st Circuit Court of Appeals": ["ME", "NH", "MA", "RI", "PR"],
+    "2nd Circuit Court of Appeals": ["VT", "NY", "CT"],
+    "3rd Circuit Court of Appeals": ["PA", "NJ", "DE", "VI"],
+    "4th Circuit Court of Appeals": ["MD", "VA", "WV", "NC", "SC"],
+    "5th Circuit Court of Appeals": ["TX", "LA", "MS"],
+    "6th Circuit Court of Appeals": ["MI", "OH", "KY", "TN"],
+    "7th Circuit Court of Appeals": ["WI", "IL", "IN"],
+    "8th Circuit Court of Appeals": ["ND", "SD", "NE", "MN", "IA", "MO", "AR"],
+    "9th Circuit Court of Appeals": ["WA", "OR", "ID", "MT", "NV", "CA", "AZ", "AK", "HI", "GU", "MP"],
+    "10th Circuit Court of Appeals": ["WY", "UT", "CO", "NM", "KS", "OK"],
+    "11th Circuit Court of Appeals": ["AL", "GA", "FL"],
+    "D.C. Circuit Court of Appeals": ["DC"]
   };
 
   var STATES = Object.keys(STATE_NAME_TO_ABBR);
@@ -765,9 +774,8 @@
       var shortStatus = get("shortStatus").toUpperCase();
       var key = [base, get("districtDocket"), amendM ? amendM[1] : "", i].join("|").toLowerCase();
       
-      // SEPARATE DISPLAY FROM FILTERING
-      var rawCirc = get("circuit"); // strictly what is in the sheet for display
-      var geoCirc = getCircuit(stateName); // mapping fallback for filtering
+      var rawCirc = get("circuit"); 
+      var geoCirc = getCircuit(stateName); 
       var filterCirc = rawCirc || (geoCirc !== "none" ? geoCirc : "");
 
       return {
@@ -781,8 +789,8 @@
         district: get("district"), 
         districtDocket: get("districtDocket"), districtUrl: get("districtUrl"),
         districtDecision: get("districtDecision"), appealingParty: get("appealingParty"),
-        circuit: rawCirc,               // Blank if no appeal
-        filterCircuit: filterCirc,      // Inferred for dropdowns/map
+        circuit: rawCirc,               
+        filterCircuit: filterCirc,      
         appealsDocket: get("appealsDocket"), appealsUrl: get("appealsUrl"),
         circuitDecision: get("circuitDecision"), 
         scotusDocket: get("scotusDocket"), scotusUrl: get("scotusUrl"),
