@@ -761,13 +761,18 @@
       var base = name.replace(/\s*\([^)]*amended[^)]*\)\s*/i, "").trim();
 
       var statute = get("statute");
+      var stateName = stateOf(statute);
       var shortStatus = get("shortStatus").toUpperCase();
       var key = [base, get("districtDocket"), amendM ? amendM[1] : "", i].join("|").toLowerCase();
+      
+      var rawCirc = get("circuit");
+      var geoCirc = getCircuit(stateName);
+      var finalCirc = rawCirc || (geoCirc !== "none" ? geoCirc : "");
 
       return {
         i: i, key: key, raw: r,
         name: name, base: base, amend: amendM ? amendM[1] : "",
-        statute: statute, stateName: stateOf(statute),
+        statute: statute, stateName: stateName,
         date: parseDate(get("dateFiled")),
         lastCheckedDate: parseDate(get("lastChecked")),
         claims: get("claims"),
@@ -775,7 +780,7 @@
         district: get("district"), 
         districtDocket: get("districtDocket"), districtUrl: get("districtUrl"),
         districtDecision: get("districtDecision"), appealingParty: get("appealingParty"),
-        circuit: get("circuit"), 
+        circuit: finalCirc, 
         appealsDocket: get("appealsDocket"), appealsUrl: get("appealsUrl"),
         circuitDecision: get("circuitDecision"), 
         scotusDocket: get("scotusDocket"), scotusUrl: get("scotusUrl"),
